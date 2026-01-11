@@ -1,9 +1,8 @@
 """
-Smart Guitar Schemas (SG-SBX-0.1)
-=================================
+Smart Guitar Sandbox Schemas
+============================
 
-Manufacturing-focused schemas for headed + headless Smart Guitar variants.
-Includes electronics fitting, CAM planning, and toolpath operations.
+Manufacturing-focused schemas for Smart Guitar variants.
 
 Contract Version: 1.0
 """
@@ -37,17 +36,15 @@ class Handedness(str, Enum):
 
 
 class Connectivity(str, Enum):
-    """Smart Guitar connectivity options."""
-    BLE = "ble"
-    WIFI = "wifi"
+    """Connectivity options."""
+    WIRELESS = "wireless"
+    WIRED = "wired"
     USB = "usb"
     MIDI = "midi"
-    OSC = "osc"
-    AUDIO_USB = "audio_usb"
 
 
 class Feature(str, Enum):
-    """Smart Guitar software features."""
+    """Software features."""
     DAW_MODE = "daw_mode"
     LOOPER = "looper"
     TUNER = "tuner"
@@ -74,27 +71,27 @@ class Vec2(BaseModel):
 
 
 class BBox3D(BaseModel):
-    """Component bounding box in mm (for electronics fit)."""
+    """Component bounding box in mm."""
     w_mm: confloat(gt=0) = Field(..., description="Width (X) in mm")
     d_mm: confloat(gt=0) = Field(..., description="Depth (Y) in mm")
     h_mm: confloat(gt=0) = Field(..., description="Height (Z) in mm")
 
 
 class Clearance(BaseModel):
-    """Extra margin around component for cables/airflow."""
+    """Component clearance."""
     margin_mm: confloat(ge=0) = Field(3.0)
     cable_bend_mm: confloat(ge=0) = Field(8.0)
 
 
 class Mounting(BaseModel):
-    """Conceptual mounting plane reference."""
+    """Mounting reference."""
     plane: Literal["pod_lid", "pod_floor", "body_spine", "body_floor"] = "pod_floor"
     fastener: Literal["m2_5", "m3", "wood_screw", "standoff"] = "m3"
     standoff_mm: confloat(ge=0) = 6.0
 
 
 class ElectronicsComponent(BaseModel):
-    """Electronics component with fitting constraints."""
+    """Electronics component."""
     id: str
     name: str
     bbox: BBox3D
@@ -110,18 +107,14 @@ class ElectronicsComponent(BaseModel):
 
 class PowerSpec(BaseModel):
     """Power system specification."""
-    battery_wh: confloat(gt=0) = 30.0
-    battery_voltage_nom: confloat(gt=0) = 7.4
-    has_bms: bool = True
-    charge_port: Literal["usb_c", "barrel_jack"] = "usb_c"
+    battery: bool = True
+    charge_port: str = "usb"
 
 
 class ThermalSpec(BaseModel):
-    """Thermal management specification."""
-    cooling: Literal["active_fan"] = "active_fan"
-    fan_size_mm: conint(gt=0) = 40
-    vents_defined: bool = False  # v0.1: warn if false
-    max_internal_c: confloat(gt=0) = 60.0
+    """Thermal management."""
+    cooling: str = "passive"
+    vents_defined: bool = False
 
 
 class BodyDims(BaseModel):
@@ -135,29 +128,20 @@ class BodyDims(BaseModel):
 
 
 # =============================================================================
-# SMART GUITAR SPEC (DESIGN TRUTH)
+# SMART GUITAR SPEC
 # =============================================================================
 
 
 class SmartGuitarSpec(BaseModel):
-    """
-    Smart Guitar design specification (design truth).
-    
-    This is the authoritative source for:
-    - Model variant (headed/headless)
-    - Handedness
-    - Electronics inventory
-    - Body dimensions
-    - CAM projection parameters
-    """
+    """Smart Guitar design specification."""
     contract_version: str = CONTRACT_VERSION
 
-    model_id: str = Field("smart_guitar", description="Stable model id")
+    model_id: str = Field("smart_guitar", description="Model id")
     model_variant: ModelVariant = ModelVariant.headed
     handedness: Handedness = Handedness.RH
 
     connectivity: List[Connectivity] = Field(
-        default_factory=lambda: [Connectivity.BLE, Connectivity.WIFI, Connectivity.USB]
+        default_factory=lambda: [Connectivity.WIRELESS, Connectivity.USB]
     )
     features: List[Feature] = Field(
         default_factory=lambda: [Feature.DAW_MODE, Feature.RECORDING]
@@ -169,7 +153,7 @@ class SmartGuitarSpec(BaseModel):
 
     electronics: List[ElectronicsComponent] = Field(default_factory=list)
 
-    # "Design intent" knobs for CAM projection (v0.1: simple)
+    # CAM projection parameters
     target_hollow_depth_in: confloat(gt=0) = 1.05
     pod_depth_in: confloat(gt=0) = 1.20
     pickup_depth_in: confloat(gt=0) = 0.75
@@ -182,20 +166,20 @@ class SmartGuitarSpec(BaseModel):
 
 
 class PlanWarning(BaseModel):
-    """Non-blocking plan warning."""
+    """Plan warning."""
     code: str
     message: str
     severity: Literal["info", "warn"] = "warn"
 
 
 class PlanError(BaseModel):
-    """Blocking plan error."""
+    """Plan error."""
     code: str
     message: str
 
 
 class CavityKind(str, Enum):
-    """Cavity types for body milling."""
+    """Cavity types."""
     pod = "pod"
     bass = "bass_main"
     treble = "treble_main"
@@ -203,40 +187,39 @@ class CavityKind(str, Enum):
 
 
 class CavityPlan(BaseModel):
-    """Cavity milling plan."""
+    """Cavity plan."""
     kind: CavityKind
     depth_in: float
-    # For v0.1 we reference "template ids" rather than emitting geometry
     template_id: str
     notes: List[str] = Field(default_factory=list)
 
 
 class ChannelKind(str, Enum):
-    """Wire channel types."""
+    """Channel types."""
     route = "route"
     drill = "drill"
 
 
 class ChannelPlan(BaseModel):
-    """Wire channel plan."""
+    """Channel plan."""
     kind: ChannelKind
     template_id: str
     notes: List[str] = Field(default_factory=list)
 
 
 class BracketPlan(BaseModel):
-    """Component mounting bracket plan."""
+    """Bracket plan."""
     component_id: str
     template_id: str
     notes: List[str] = Field(default_factory=list)
 
 
 class ToolpathOp(BaseModel):
-    """Individual toolpath operation."""
+    """Toolpath operation."""
     op_id: str
     title: str
-    strategy: Literal["2d_adaptive", "2d_pocket", "2d_contour", "drill"] = "2d_adaptive"
-    tool: str = Field(..., description="Tool library id, e.g. T2_1_4_UPCUT")
+    strategy: Literal["pocket", "contour", "drill"] = "pocket"
+    tool: str = Field(..., description="Tool id")
     max_stepdown_in: float
     stepover_in: float
     depth_in: float
@@ -245,12 +228,7 @@ class ToolpathOp(BaseModel):
 
 
 class SmartCamPlan(BaseModel):
-    """
-    Smart Guitar CAM plan (manufacturing projection).
-    
-    Generated from SmartGuitarSpec via the planner.
-    Contains cavities, brackets, channels, and toolpath ops.
-    """
+    """Smart Guitar CAM plan."""
     contract_version: str = CONTRACT_VERSION
     model_id: str
     model_variant: ModelVariant
@@ -269,10 +247,8 @@ class SmartCamPlan(BaseModel):
 # DEFAULT TOOLPATH PARAMETERS
 # =============================================================================
 
-
-# Conservative defaults used by planner (execution defaults; not "design truth")
 DEFAULT_TOOLPATHS: Dict[str, Dict[str, Any]] = {
-    "T2_1_4_UPCUT": {"max_stepdown_in": 0.125, "stepover_in": 0.11},
-    "T3_1_8_UPCUT": {"max_stepdown_in": 0.0625, "stepover_in": 0.06},
-    "T1_1_4_DOWNCUT": {"max_stepdown_in": 0.1875, "stepover_in": 0.12},
+    "quarter_upcut": {"max_stepdown_in": 0.125, "stepover_in": 0.11},
+    "eighth_upcut": {"max_stepdown_in": 0.0625, "stepover_in": 0.06},
+    "quarter_downcut": {"max_stepdown_in": 0.1875, "stepover_in": 0.12},
 }

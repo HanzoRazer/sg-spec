@@ -2,11 +2,9 @@
 Smart Guitar Pydantic Models
 ============================
 
-Generated from instrument_model_registry.json schema.
-Use these models for backend API development.
+Contract definitions for Smart Guitar instruments.
 
 Version: 1.0.0
-Generated: December 22, 2025
 """
 
 from __future__ import annotations
@@ -28,15 +26,15 @@ class SmartGuitarStatus(str, Enum):
 
 
 class MidiProtocol(str, Enum):
-    USB_MIDI = "USB MIDI"
-    BLE_MIDI = "BLE MIDI"
-    DIN_MIDI = "DIN MIDI (optional)"
+    USB_MIDI = "usb"
+    WIRELESS_MIDI = "wireless"
+    DIN_MIDI = "din"
 
 
 class AudioOutput(str, Enum):
-    TRS = '1/4" TRS'
-    USB_AUDIO = "USB Audio"
-    BLUETOOTH = "Bluetooth A2DP"
+    ANALOG = "analog"
+    USB_AUDIO = "usb"
+    WIRELESS = "wireless"
 
 
 class ToolpathType(str, Enum):
@@ -54,79 +52,49 @@ class SmartGuitarComponent(str, Enum):
 
 
 # =============================================================================
-# IoT SUBSYSTEMS
+# SUBSYSTEMS
 # =============================================================================
 
 class SmartGuitarIoT(BaseModel):
-    """IoT hardware specifications."""
-    processor: str = "Raspberry Pi 5"
-    memory_gb: int = 8
-    storage_gb: int = 64
-    os: str = "Linux (custom Buildroot)"
+    """Compute specifications."""
+    processor: str = "embedded_host"
+    memory_gb: int = 0
+    storage_gb: int = 0
+    os: str = "linux"
 
 
 class SmartGuitarConnectivity(BaseModel):
     """Connectivity options."""
-    bluetooth: str = "BLE 5.0"
-    wifi: str = "Wi-Fi 6 (802.11ax)"
-    usb: str = "USB-C 3.1"
+    wired: bool = True
+    wireless: bool = True
     midi: List[MidiProtocol] = Field(default_factory=lambda: [
         MidiProtocol.USB_MIDI,
-        MidiProtocol.BLE_MIDI,
-        MidiProtocol.DIN_MIDI,
+        MidiProtocol.WIRELESS_MIDI,
     ])
 
 
 class SmartGuitarAudio(BaseModel):
-    """Audio subsystem specifications."""
-    adc_bits: Literal[24] = 24
-    sample_rate_khz: Literal[48, 96, 192] = 96
-    latency_ms: float = 3.0
-    dsp: str = "Real-time pitch detection, effects processing"
+    """Audio subsystem."""
+    quality: str = "high_resolution"
+    latency: str = "low"
     outputs: List[AudioOutput] = Field(default_factory=lambda: [
-        AudioOutput.TRS,
+        AudioOutput.ANALOG,
         AudioOutput.USB_AUDIO,
-        AudioOutput.BLUETOOTH,
+        AudioOutput.WIRELESS,
     ])
 
 
 class SmartGuitarSensors(BaseModel):
     """Sensor specifications."""
-    piezo_pickups: int = 6
-    accelerometer: bool = True
-    gyroscope: bool = True
-    capacitive_touch_frets: bool = True
-    pressure_sensitive_strings: bool = False
+    pickups: bool = True
+    motion: bool = True
+    touch: bool = True
 
 
 class SmartGuitarPower(BaseModel):
-    """Power system specifications."""
-    battery_type: str = "Li-ion 18650"
-    capacity_mah: int = 6000
-    runtime_hours: int = 8
-    charging: str = "USB-C PD 20W"
-
-
-# =============================================================================
-# DAW INTEGRATION
-# =============================================================================
-
-class DawPartner(BaseModel):
-    """DAW partner integration details."""
-    status: Literal["OEM partnership", "integration planned", "community"]
-    features: List[str]
-
-
-class SmartGuitarDawIntegration(BaseModel):
-    """DAW integration partnerships."""
-    giglad: DawPartner = Field(default_factory=lambda: DawPartner(
-        status="OEM partnership",
-        features=["Live backing tracks", "AI accompaniment"],
-    ))
-    pgmusic: DawPartner = Field(default_factory=lambda: DawPartner(
-        status="OEM partnership",
-        features=["Band-in-a-Box integration", "Chord recognition"],
-    ))
+    """Power system."""
+    battery: bool = True
+    runtime: str = "extended"
 
 
 # =============================================================================
@@ -135,13 +103,13 @@ class SmartGuitarDawIntegration(BaseModel):
 
 class SmartGuitarCamFeatures(BaseModel):
     """CAM manufacturing features."""
-    electronics_cavity: str = "Custom routed for Pi 5 + battery"
-    control_panel: str = "3D printed or CNC aluminum"
-    pcb_mounting: str = "M2.5 standoffs, vibration dampened"
+    electronics_cavity: str = "routed"
+    control_panel: str = "machined"
+    pcb_mounting: str = "standoffs"
 
 
 class SmartGuitarToolpath(BaseModel):
-    """Toolpath definition for CAM operations."""
+    """Toolpath definition."""
     name: str
     type: ToolpathType
     description: str
@@ -159,55 +127,47 @@ class SmartGuitarSpec(BaseModel):
     category: Literal["electric_guitar"] = "electric_guitar"
     status: SmartGuitarStatus = SmartGuitarStatus.COMPLETE
     scale_length_mm: float = 648.0
-    scale_length_inches: float = 25.51
     fret_count: int = 24
     string_count: int = 6
-    manufacturer: str = "Luthier's ToolBox"
-    year_introduced: int = 2025
-    description: str = (
-        "IoT-enabled electric guitar with embedded computing, "
-        "real-time DSP, and DAW integration"
-    )
-    features: List[str] = Field(default_factory=lambda: [
-        "24-fret neck",
-        "6 strings",
-        '648.0mm scale (25.51")',
-    ])
+    description: str = "Connected electric guitar"
 
 
 class SmartGuitarArchitecture(BaseModel):
-    """Full architecture specification."""
+    """Architecture specification."""
     hardware: dict = Field(default_factory=lambda: {
-        "processor": "Raspberry Pi 5",
-        "connectivity": ["Bluetooth LE 5.0", "USB-C", "Wi-Fi 6"],
-        "audio": "24-bit ADC with real-time DSP",
-        "power": "Li-ion battery with USB-C charging",
+        "compute": "embedded",
+        "connectivity": ["wired", "wireless"],
+        "audio": "high_resolution",
     })
     software: dict = Field(default_factory=lambda: {
-        "os": "Linux (headless)",
-        "daw_integration": ["MIDI over BLE", "OSC", "USB Audio"],
-        "temperament_engine": "/api/music/temperament/*",
+        "os": "linux",
     })
 
 
 class SmartGuitarInfo(BaseModel):
-    """Full Smart Guitar info response."""
+    """Smart Guitar info response."""
     ok: bool = True
     model_id: Literal["smart"] = "smart"
     display_name: str = "Smart Guitar"
     category: str = "electric_guitar"
-    concept: str = "Smart Guitar DAW Bundle"
-    description: str = ""
     architecture: SmartGuitarArchitecture = Field(
         default_factory=SmartGuitarArchitecture
     )
-    status: str = "Development - requires custom implementation"
     related_endpoints: dict = Field(default_factory=lambda: {
         "spec": "/api/instruments/guitar/smart/spec",
-        "bundle": "/api/instruments/guitar/smart/bundle",
-        "temperament": "/api/music/temperament/health",
         "cam": "/api/cam/guitar/smart/health",
     })
+
+
+class DawPartner(BaseModel):
+    """Integration details."""
+    status: str = "planned"
+    features: List[str] = Field(default_factory=list)
+
+
+class SmartGuitarDawIntegration(BaseModel):
+    """DAW integration."""
+    enabled: bool = True
 
 
 # =============================================================================
@@ -215,7 +175,7 @@ class SmartGuitarInfo(BaseModel):
 # =============================================================================
 
 class SmartGuitarRegistryEntry(BaseModel):
-    """Complete registry entry matching JSON schema."""
+    """Registry entry."""
     id: Literal["smart_guitar"] = "smart_guitar"
     display_name: str = "Smart Guitar"
     status: SmartGuitarStatus = SmartGuitarStatus.COMPLETE
@@ -223,13 +183,7 @@ class SmartGuitarRegistryEntry(BaseModel):
     scale_length_mm: float = 648.0
     fret_count: int = 24
     string_count: int = 6
-    description: str = (
-        "IoT-enabled electric guitar with embedded computing, "
-        "real-time DSP, and DAW integration"
-    )
-    manufacturer: str = "Luthier's ToolBox"
-    year_introduced: int = 2025
-    body_style: str = "stratocaster_derivative"
+    description: str = "Connected electric guitar"
     iot: SmartGuitarIoT = Field(default_factory=SmartGuitarIoT)
     connectivity: SmartGuitarConnectivity = Field(
         default_factory=SmartGuitarConnectivity
@@ -238,31 +192,15 @@ class SmartGuitarRegistryEntry(BaseModel):
     sensors: SmartGuitarSensors = Field(default_factory=SmartGuitarSensors)
     power: SmartGuitarPower = Field(default_factory=SmartGuitarPower)
     features: List[str] = Field(default_factory=lambda: [
-        "Real-time pitch detection",
-        "Alternative temperament support (19+ systems)",
-        "LED fret markers (RGB addressable)",
-        "Onboard effects processing",
-        "DAW integration (Giglad, Band-in-a-Box)",
-        "Chord recognition",
-        "Looper (60s stereo)",
-        "Metronome with tap tempo",
-        "Tuner (chromatic + temperament-aware)",
-        "Wireless audio streaming",
-        "MIDI controller mode",
-        "Firmware OTA updates",
+        "temperament_support",
+        "led_markers",
+        "effects_processing",
+        "wireless_audio",
+        "midi_output",
     ])
-    daw_integration: SmartGuitarDawIntegration = Field(
-        default_factory=SmartGuitarDawIntegration
-    )
     cam_features: SmartGuitarCamFeatures = Field(
         default_factory=SmartGuitarCamFeatures
     )
-    assets: List[str] = Field(default_factory=lambda: [
-        "smart_guitar/body_outline.dxf",
-        "smart_guitar/electronics_cavity.dxf",
-        "smart_guitar/control_panel.dxf",
-        "smart_guitar/pcb_mounting.dxf",
-    ])
 
 
 # =============================================================================
@@ -270,18 +208,14 @@ class SmartGuitarRegistryEntry(BaseModel):
 # =============================================================================
 
 class SmartGuitarHealthResponse(BaseModel):
-    """CAM health check response."""
+    """Health check response."""
     ok: bool = True
     subsystem: Literal["smart_guitar_cam"] = "smart_guitar_cam"
     model_id: Literal["smart"] = "smart"
     capabilities: List[str] = Field(default_factory=lambda: [
         "toolpaths",
         "preview",
-        "electronics_routing",
     ])
-    status: str = "Development - toolpath generation in progress"
-    instrument_spec: str = "/api/instruments/guitar/smart/spec"
-    temperament_api: str = "/api/music/temperament/health"
 
 
 class SmartGuitarToolpathsResponse(BaseModel):
@@ -291,20 +225,18 @@ class SmartGuitarToolpathsResponse(BaseModel):
 
 
 class SmartGuitarResource(BaseModel):
-    """DAW bundle resource."""
+    """Bundle resource."""
     name: str
-    type: Literal["documentation", "oem_correspondence", "instructions", "pdf"]
+    type: Literal["documentation", "instructions"]
     path: Optional[str] = None
     description: Optional[str] = None
 
 
 class SmartGuitarBundleResponse(BaseModel):
-    """DAW bundle info response."""
+    """Bundle info response."""
     ok: bool = True
     bundle_version: str = "1.0"
-    build_date: str = "2025-10-14"
     resources: List[SmartGuitarResource] = Field(default_factory=list)
-    status: str = "Documentation bundle - requires custom implementation"
 
 
 # =============================================================================
@@ -312,18 +244,11 @@ class SmartGuitarBundleResponse(BaseModel):
 # =============================================================================
 
 SMART_GUITAR_FEATURES: List[str] = [
-    "Real-time pitch detection",
-    "Alternative temperament support (19+ systems)",
-    "LED fret markers (RGB addressable)",
-    "Onboard effects processing",
-    "DAW integration (Giglad, Band-in-a-Box)",
-    "Chord recognition",
-    "Looper (60s stereo)",
-    "Metronome with tap tempo",
-    "Tuner (chromatic + temperament-aware)",
-    "Wireless audio streaming",
-    "MIDI controller mode",
-    "Firmware OTA updates",
+    "temperament_support",
+    "led_markers",
+    "effects_processing",
+    "wireless_audio",
+    "midi_output",
 ]
 
 SMART_GUITAR_COMPONENTS: List[SmartGuitarComponent] = [
@@ -338,31 +263,19 @@ DEFAULT_TOOLPATHS: List[SmartGuitarToolpath] = [
     SmartGuitarToolpath(
         name="Electronics Cavity",
         type=ToolpathType.POCKET,
-        description="Pocket for Raspberry Pi 5 and electronics board",
+        description="Electronics compartment",
         component=SmartGuitarComponent.ELECTRONICS_CAVITY,
     ),
     SmartGuitarToolpath(
         name="Battery Pocket",
         type=ToolpathType.POCKET,
-        description="Li-ion battery compartment",
+        description="Battery compartment",
         component=SmartGuitarComponent.BATTERY,
     ),
     SmartGuitarToolpath(
         name="LED Channel",
         type=ToolpathType.CONTOUR,
-        description="Channel for LED strip along fretboard edge",
+        description="LED channel",
         component=SmartGuitarComponent.LED_CHANNEL,
-    ),
-    SmartGuitarToolpath(
-        name="USB-C Port Hole",
-        type=ToolpathType.DRILL,
-        description="Mounting hole for USB-C charging port",
-        component=SmartGuitarComponent.USB_PORT,
-    ),
-    SmartGuitarToolpath(
-        name="Antenna Recess",
-        type=ToolpathType.POCKET,
-        description="Recess for BLE/WiFi antenna",
-        component=SmartGuitarComponent.ANTENNA,
     ),
 ]

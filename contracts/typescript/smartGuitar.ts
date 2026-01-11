@@ -2,11 +2,9 @@
  * Smart Guitar TypeScript Interfaces
  * ===================================
  *
- * Generated from instrument_model_registry.json schema.
- * Use these types for frontend development.
+ * Contract definitions for Smart Guitar instruments.
  *
  * @version 1.0.0
- * @generated December 22, 2025
  */
 
 // =============================================================================
@@ -19,13 +17,9 @@ export interface SmartGuitarSpec {
   category: 'electric_guitar';
   status: 'COMPLETE' | 'STUB' | 'ASSETS_ONLY';
   scale_length_mm: number;
-  scale_length_inches: number;
   fret_count: number;
   string_count: number;
-  manufacturer: string;
-  year_introduced: number;
   description: string;
-  features: string[];
 }
 
 export interface SmartGuitarInfo {
@@ -33,56 +27,42 @@ export interface SmartGuitarInfo {
   model_id: 'smart';
   display_name: string;
   category: string;
-  concept: string;
-  description: string;
   architecture: SmartGuitarArchitecture;
-  status: string;
   related_endpoints: SmartGuitarEndpoints;
 }
 
 // =============================================================================
-// IoT SUBSYSTEMS
+// SUBSYSTEMS
 // =============================================================================
 
 export interface SmartGuitarIoT {
-  processor: 'Raspberry Pi 5';
+  processor: string;
   memory_gb: number;
   storage_gb: number;
   os: string;
 }
 
 export interface SmartGuitarConnectivity {
-  bluetooth: string;
-  wifi: string;
-  usb: string;
-  midi: MidiProtocol[];
+  wired: boolean;
+  wireless: boolean;
+  midi: boolean;
 }
-
-export type MidiProtocol = 'USB MIDI' | 'BLE MIDI' | 'DIN MIDI (optional)';
 
 export interface SmartGuitarAudio {
-  adc_bits: 24;
-  sample_rate_khz: 48 | 96 | 192;
-  latency_ms: number;
-  dsp: string;
-  outputs: AudioOutput[];
+  quality: string;
+  latency: string;
+  outputs: string[];
 }
 
-export type AudioOutput = '1/4" TRS' | 'USB Audio' | 'Bluetooth A2DP';
-
 export interface SmartGuitarSensors {
-  piezo_pickups: number;
-  accelerometer: boolean;
-  gyroscope: boolean;
-  capacitive_touch_frets: boolean;
-  pressure_sensitive_strings: boolean;
+  pickups: boolean;
+  motion: boolean;
+  touch: boolean;
 }
 
 export interface SmartGuitarPower {
-  battery_type: 'Li-ion 18650';
-  capacity_mah: number;
-  runtime_hours: number;
-  charging: string;
+  battery: boolean;
+  runtime: string;
 }
 
 // =============================================================================
@@ -91,37 +71,18 @@ export interface SmartGuitarPower {
 
 export interface SmartGuitarArchitecture {
   hardware: {
-    processor: string;
+    compute: string;
     connectivity: string[];
     audio: string;
-    power: string;
   };
   software: {
     os: string;
-    daw_integration: string[];
-    temperament_engine: string;
   };
 }
 
 export interface SmartGuitarEndpoints {
   spec: string;
-  bundle: string;
-  temperament: string;
   cam: string;
-}
-
-// =============================================================================
-// DAW INTEGRATION
-// =============================================================================
-
-export interface DawPartner {
-  status: 'OEM partnership' | 'integration planned' | 'community';
-  features: string[];
-}
-
-export interface SmartGuitarDawIntegration {
-  giglad: DawPartner;
-  pgmusic: DawPartner;
 }
 
 // =============================================================================
@@ -149,7 +110,7 @@ export type SmartGuitarComponent =
   | 'antenna';
 
 // =============================================================================
-// FULL REGISTRY ENTRY
+// REGISTRY ENTRY
 // =============================================================================
 
 export interface SmartGuitarRegistryEntry {
@@ -161,18 +122,13 @@ export interface SmartGuitarRegistryEntry {
   fret_count: number;
   string_count: number;
   description: string;
-  manufacturer: string;
-  year_introduced: number;
-  body_style: string;
   iot: SmartGuitarIoT;
   connectivity: SmartGuitarConnectivity;
   audio: SmartGuitarAudio;
   sensors: SmartGuitarSensors;
   power: SmartGuitarPower;
   features: string[];
-  daw_integration: SmartGuitarDawIntegration;
   cam_features: SmartGuitarCamFeatures;
-  assets: string[];
 }
 
 // =============================================================================
@@ -184,9 +140,6 @@ export interface SmartGuitarHealthResponse {
   subsystem: 'smart_guitar_cam';
   model_id: 'smart';
   capabilities: string[];
-  status: string;
-  instrument_spec: string;
-  temperament_api: string;
 }
 
 export interface SmartGuitarToolpathsResponse {
@@ -194,19 +147,17 @@ export interface SmartGuitarToolpathsResponse {
   toolpaths: SmartGuitarToolpath[];
 }
 
+export interface SmartGuitarResource {
+  name: string;
+  type: 'documentation' | 'instructions';
+  path?: string;
+  description?: string;
+}
+
 export interface SmartGuitarBundleResponse {
   ok: boolean;
   bundle_version: string;
-  build_date: string;
   resources: SmartGuitarResource[];
-  status: string;
-}
-
-export interface SmartGuitarResource {
-  name: string;
-  type: 'documentation' | 'oem_correspondence' | 'instructions' | 'pdf';
-  path?: string;
-  description?: string;
 }
 
 // =============================================================================
@@ -214,18 +165,11 @@ export interface SmartGuitarResource {
 // =============================================================================
 
 export const SMART_GUITAR_FEATURES = [
-  'Real-time pitch detection',
-  'Alternative temperament support (19+ systems)',
-  'LED fret markers (RGB addressable)',
-  'Onboard effects processing',
-  'DAW integration (Giglad, Band-in-a-Box)',
-  'Chord recognition',
-  'Looper (60s stereo)',
-  'Metronome with tap tempo',
-  'Tuner (chromatic + temperament-aware)',
-  'Wireless audio streaming',
-  'MIDI controller mode',
-  'Firmware OTA updates',
+  'temperament_support',
+  'led_markers',
+  'effects_processing',
+  'wireless_audio',
+  'midi_output',
 ] as const;
 
 export type SmartGuitarFeature = (typeof SMART_GUITAR_FEATURES)[number];
@@ -241,6 +185,4 @@ export const SMART_GUITAR_DEFAULTS: Partial<SmartGuitarSpec> = {
   scale_length_mm: 648.0,
   fret_count: 24,
   string_count: 6,
-  manufacturer: "Luthier's ToolBox",
-  year_introduced: 2025,
 };

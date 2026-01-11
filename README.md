@@ -1,18 +1,16 @@
 # sg-spec
 
-> **String Master Smart Guitar — Contract Specifications**
+> **Smart Guitar — Contract Specifications**
 
-Canonical source of truth for Smart Guitar runtime contracts, schemas, and hardware profiles.
+Data contracts and capability descriptors for Smart Guitar systems.
 
 ---
 
 ## Purpose
 
-This repository defines the **runtime-facing contracts** for the Smart Guitar IoT instrument. It answers:
+This repository defines **interface contracts** for Smart Guitar instruments.
 
-> "What capabilities does the Smart Guitar runtime have?"
-
-Manufacturing and build-time logic (CAM, geometry, toolpaths) remains in [Luthier's Toolbox](https://github.com/HanzoRazer/luthiers-toolbox).
+> Implementation details live in downstream systems.
 
 ---
 
@@ -20,18 +18,13 @@ Manufacturing and build-time logic (CAM, geometry, toolpaths) remains in [Luthie
 
 ```
 sg-spec/
-├── README.md              # This file
-├── MANIFEST.md            # Extraction manifest (what moved, what stayed)
+├── README.md
+├── MANIFEST.md
 ├── contracts/
-│   ├── __init__.py
-│   ├── schemas/           # Pydantic models (source of truth)
-│   │   ├── __init__.py
-│   │   ├── smart_guitar.py
-│   │   └── sandbox_schemas.py
-│   └── typescript/        # Generated TypeScript types
-│       └── smartGuitar.ts
+│   ├── schemas/           # Pydantic models
+│   └── typescript/        # TypeScript types
 ├── hardware/
-│   └── (hardware profiles - future)
+│   └── profile.json       # Capability descriptors
 └── docs/
     └── SMART_GUITAR_SPEC.md
 ```
@@ -41,11 +34,7 @@ sg-spec/
 ## Installation
 
 ```bash
-# As a Python package (future)
 pip install sg-spec
-
-# As a TypeScript package (future)
-npm install @sg-spec/contracts
 ```
 
 ---
@@ -55,7 +44,7 @@ npm install @sg-spec/contracts
 ### Python
 
 ```python
-from sg_spec.contracts.schemas.smart_guitar import SmartGuitarSpec, SmartGuitarInfo
+from sg_spec.schemas import SmartGuitarSpec
 
 spec = SmartGuitarSpec(
     model_id="smart_guitar",
@@ -69,45 +58,23 @@ spec = SmartGuitarSpec(
 ### TypeScript
 
 ```typescript
-import type { SmartGuitarSpec, SmartGuitarRegistryEntry } from '@sg-spec/contracts';
-
-const spec: SmartGuitarSpec = {
-  model_id: 'smart_guitar',
-  display_name: 'Smart Guitar',
-  category: 'electric_guitar',
-  // ...
-};
+import type { SmartGuitarSpec } from '@sg-spec/contracts';
 ```
 
 ---
 
 ## Ownership Boundary
 
-| Domain | Owner | Examples |
-|--------|-------|----------|
-| Runtime contracts | **sg-spec** | Schemas, hardware profiles, capability definitions |
-| Manufacturing | Luthier's Toolbox | CAM routers, geometry, toolpaths, build templates |
-| Device firmware | sg-device (future) | Pi daemon, audio routing, OTA updates |
-| Accompaniment AI | sg-engine (future) | String Master, deterministic generators |
-| Adaptive AI | sg-intelligence (future) | Player models, learning policies |
-
----
-
-## Related Repositories
-
-| Repo | Status | Purpose |
-|------|--------|---------|
-| [luthiers-toolbox](https://github.com/HanzoRazer/luthiers-toolbox) | Active | Manufacturing/authoring platform |
-| sg-device | Planned | Pi runtime + firmware |
-| sg-engine | Planned | Accompaniment engine (String Master) |
-| sg-intelligence | Planned | Adaptive AI / player modeling |
-| sg-app | Planned | Companion app + DAW bridge |
+| Domain | Owner |
+|--------|-------|
+| Contracts | sg-spec |
+| Manufacturing | Downstream |
+| Runtime | Downstream |
 
 ---
 
 ## Version
 
-- **sg-spec**: 1.0.0
 - **Contract Version**: 1.0
 - **Created**: 2026-01-10
 
