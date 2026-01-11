@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Smart Guitar Hardware Profile",
+  "version": "1.0.0",
+  "description": "Runtime hardware capabilities for Smart Guitar IoT instrument",
+
+  "hardware": {
+    "processor": {
+      "model": "Raspberry Pi 5",
+      "memory_gb": 8,
+      "storage_gb": 64,
+      "os": "Linux (custom Buildroot)"
+    },
+    "connectivity": {
+      "bluetooth": "BLE 5.0",
+      "wifi": "Wi-Fi 6 (802.11ax)",
+      "usb": "USB-C 3.1",
+      "midi": ["USB MIDI", "BLE MIDI", "DIN MIDI (optional)"]
+    },
+    "audio": {
+      "adc_bits": 24,
+      "sample_rates_khz": [48, 96, 192],
+      "latency_ms": 3,
+      "channels": 6,
+      "outputs": ["1/4\" TRS", "USB Audio", "Bluetooth A2DP"]
+    },
+    "sensors": {
+      "piezo_pickups": 6,
+      "accelerometer": true,
+      "gyroscope": true,
+      "capacitive_touch_frets": true,
+      "pressure_sensitive_strings": true
+    },
+    "power": {
+      "battery_type": "Li-ion 18650",
+      "configuration": "2S2P",
+      "capacity_mah": 6000,
+      "voltage_nominal": 7.4,
+      "runtime_hours": 8,
+      "charging": "USB-C PD 20W"
+    }
+  },
+
+  "capabilities": {
+    "temperament_systems": 19,
+    "effects_slots": 8,
+    "looper_seconds": 60,
+    "recording_minutes": 120,
+    "firmware_ota": true
+  },
+
+  "model_variants": [
+    {
+      "id": "headed",
+      "display_name": "Standard (Headed)",
+      "description": "Traditional headstock design"
+    },
+    {
+      "id": "headless",
+      "display_name": "Headless",
+      "description": "Compact headless design"
+    }
+  ]
+}
