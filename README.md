@@ -73,6 +73,18 @@ import type { SmartGuitarSpec } from '@sg-spec/contracts';
 
 ---
 
+## Governance Documentation
+
+Cross-repository governance between sg-spec and luthiers-toolbox:
+
+| Document | Description |
+|----------|-------------|
+| [GOVERNANCE_EXECUTIVE_SUMMARY.md](./docs/GOVERNANCE_EXECUTIVE_SUMMARY.md) | Architecture and boundary enforcement |
+| [TELEMETRY_SYSTEM_AUDIT.md](./docs/TELEMETRY_SYSTEM_AUDIT.md) | Smart Guitar → Toolbox telemetry audit |
+| [SAFE_EXPORT_SYSTEM_AUDIT.md](./docs/SAFE_EXPORT_SYSTEM_AUDIT.md) | Toolbox → Smart Guitar export audit |
+
+---
+
 ## Version
 
 - **Contract Version**: 1.0
