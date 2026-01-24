@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `qa_core` - QA core schema (non-versioned, internal) + SHA256 hash
 - `CONTRACTS_VERSION.json` - Sentinel file for governance (Scenario B)
 - `CHANGELOG.md` - This file
+- `coach_context_packet_v1` - AI Coach input context (sg-ai) + SHA256 hash
+- `coaching_draft_v1` - AI Coach output draft (sg-ai) + SHA256 hash
 
 ### Changed
 - None
