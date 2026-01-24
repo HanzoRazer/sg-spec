@@ -139,4 +139,4 @@ def evaluate_session(session: SessionRecord) -> CoachEvaluation:
     )
 
 
-__all__ = ["evaluate_session", "COACH_VERSION"]
+__all__ = ["evaluate_session", "COACH_VERSION", "STEP_ERROR_THRESHOLD_MS"]
