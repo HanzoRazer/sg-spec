@@ -39,4 +39,4 @@ where = ["."]
 include = ["sg_spec*"]
 
 [tool.setuptools.package-data]
-sg_spec = ["py.typed"]
+sg_spec = ["py.typed", "ai/coach/fixtures/**/*.json"]
