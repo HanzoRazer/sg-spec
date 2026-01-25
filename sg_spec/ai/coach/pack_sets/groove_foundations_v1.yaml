@@ -1,0 +1,25 @@
+id: groove_foundations_v1
+display_name: Groove Foundations
+version: 1.0.0
+license: core
+engine_compatibility: '>=0.2.0'
+description:
+  short: Foundational groove forms with minimal substitution density.
+  long: A starter set of core groove-first forms (rock/disco/house/country/hip-hop)
+    designed to lock time feel before introducing heavy harmonic tension.
+packs:
+- pack_id: rock_straight_v1
+- pack_id: disco_four_on_floor_v1
+- pack_id: house_grid_v1
+- pack_id: country_train_beat_v1
+- pack_id: hiphop_half_time_v1
+tags:
+- foundations
+- groove
+- starter
+- product_set
+sku: PACKSET-GROOVE_FOUNDATIONS_V1
+tier: core
+unlock:
+  flags: []
+  requires: []
