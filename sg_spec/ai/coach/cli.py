@@ -278,11 +278,13 @@ def cmd_ota_bundle(args: argparse.Namespace) -> int:
     # Selector exclusivity validation
     selectors = [
         bool(getattr(args, "session", None)),
+        bool(getattr(args, "dance_pack", None)),
+        bool(getattr(args, "dance_pack_path", None)),
         bool(getattr(args, "dance_pack_set", None)),
         bool(getattr(args, "dance_pack_set_path", None)),
     ]
     if sum(selectors) > 1:
-        print("ERROR: Choose only one: --session | --dance-pack-set | --dance-pack-set-path", file=sys.stderr)
+        print("ERROR: Choose only one: --session | --dance-pack | --dance-pack-path | --dance-pack-set | --dance-pack-set-path", file=sys.stderr)
         return 1
 
     out_dir = Path(args.out)
@@ -298,9 +300,18 @@ def cmd_ota_bundle(args: argparse.Namespace) -> int:
             args, hmac_secret, make_zip, started, manifest_path
         )
 
+    # Single-pack mode: build bundle directly from dance pack
+    dance_pack_id = getattr(args, "dance_pack", None)
+    dance_pack_path = getattr(args, "dance_pack_path", None)
+
+    if dance_pack_id or dance_pack_path:
+        return _build_bundle_from_single_pack(
+            args, hmac_secret, make_zip, started, manifest_path
+        )
+
     # Session mode (original behavior)
     if not args.session:
-        print("ERROR: --session required (or use --dance-pack-set)", file=sys.stderr)
+        print("ERROR: --session required (or use --dance-pack / --dance-pack-set)", file=sys.stderr)
         return 1
 
     session_json = _read_text(args.session)
@@ -550,6 +561,89 @@ def _build_multi_pack_bundle(
     return 0
 
 
+
+
+def _build_bundle_from_single_pack(
+    args: argparse.Namespace,
+    hmac_secret: bytes | None,
+    make_zip: bool,
+    started: float,
+    manifest_path: Path,
+) -> int:
+    """
+    Build OTA bundle from a single dance pack.
+
+    Loads pack by ID or from file, generates assignment defaults,
+    and creates a single OTA bundle.
+
+    Returns:
+        0 on success, non-zero on error
+    """
+    from .dance_pack import load_pack_from_file
+
+    dance_pack_id = getattr(args, "dance_pack", None)
+    dance_pack_path = getattr(args, "dance_pack_path", None)
+
+    if dance_pack_path:
+        pack = load_pack_from_file(dance_pack_path)
+        pack_id = pack.metadata.id
+    else:
+        pack = load_pack_by_id(dance_pack_id)
+        pack_id = dance_pack_id
+
+    # Get assignment defaults for this pack
+    defaults = pack_to_assignment_defaults(pack)
+
+    # Create assignment from pack defaults
+    assignment = _plan_assignment_from_pack_defaults(pack_id, defaults, pack)
+
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Build bundle
+    bundle_name = args.name or f"ota_bundle__{pack_id}"
+
+    res = build_assignment_ota_bundle(
+        assignment=assignment,
+        out_dir=str(out_dir),
+        bundle_name=bundle_name,
+        product=args.product,
+        target_device_model=args.device_model,
+        target_min_firmware=args.min_firmware,
+        attachments=None,
+        make_zip=make_zip,
+        hmac_secret=hmac_secret,
+    )
+
+    # Write manifest
+    manifest = {
+        "schema_id": "ota_bundle_manifest",
+        "schema_version": "v1",
+        "mode": "single-pack",
+        "generated_at_unix": int(started),
+        "elapsed_s": round(time.time() - started, 3),
+        "pack": {
+            "pack_id": pack_id,
+            "display_name": pack.metadata.display_name,
+            "difficulty": pack.practice_mapping.difficulty_rating,
+        },
+        "outputs": [
+            {
+                "dance_pack_id": pack_id,
+                "bundle_dir": str(res.bundle_dir),
+                "zip_path": str(res.zip_path) if res.zip_path else None,
+            }
+        ],
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+
+    print(str(res.bundle_dir))
+    if res.zip_path is not None:
+        print(str(res.zip_path))
+    print(f"Manifest: {manifest_path}")
+
+    return 0
+
 def cmd_ota_verify_folder(args: argparse.Namespace) -> int:
     """
     Verify an OTA bundle directory (folder form).
@@ -713,6 +807,8 @@ def build_parser() -> argparse.ArgumentParser:
     # --- ota-bundle ---
     p_b = sub.add_parser("ota-bundle", help="Build OTA bundle(s) from SessionRecord or Pack Set.")
     p_b.add_argument("--session", default=None, help="Path to session.json (SessionRecord).")
+    p_b.add_argument("--dance-pack", default=None, help="Single dance pack ID to build bundle from.")
+    p_b.add_argument("--dance-pack-path", default=None, help="Path to single dance pack YAML file.")
     p_b.add_argument("--dance-pack-set", default=None, help="Pack set ID to expand into per-pack bundles.")
     p_b.add_argument("--dance-pack-set-path", default=None, help="Path to pack set YAML file.")
     p_b.add_argument("--multi-pack", action="store_true", help="Emit single combined multi-pack bundle (default: one bundle per pack).")
