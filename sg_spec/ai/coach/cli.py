@@ -511,21 +511,23 @@ def _build_multi_pack_bundle(
             hmac_secret=hmac_secret,
         )
 
+        # Compute relative paths for device-loader contract
+        sub_rel = res.bundle_dir.relative_to(bundle_dir)
+        manifest_rel = sub_rel / "manifest.json"
+
         sub_outputs.append({
             "dance_pack_id": pack_id,
-            "display_name": pack.metadata.display_name,
-            "sub_bundle_dir": str(res.bundle_dir.relative_to(bundle_dir)),
+            "sub_bundle_dir": str(sub_rel),
+            "manifest_path": str(manifest_rel),
         })
         print(f"  Sub-bundle: {pack_id}")
 
-    # Write internal manifest inside the multi-pack bundle
+    # Write internal manifest inside the multi-pack bundle (device-loader contract)
     internal_manifest = {
         "schema_id": "ota_multi_pack_bundle",
         "schema_version": "v1",
         "set_id": pack_set.id,
-        "set_display_name": pack_set.display_name,
-        "tier": pack_set.tier,
-        "pack_count": len(pack_ids),
+        "generated_at_unix": int(started),
         "packs": sub_outputs,
     }
     (bundle_dir / "bundle_manifest.json").write_text(

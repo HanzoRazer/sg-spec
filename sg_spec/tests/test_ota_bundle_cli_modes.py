@@ -22,6 +22,7 @@ except ImportError:
 
 CONTRACTS_DIR = Path(__file__).parent.parent.parent.parent / "contracts"
 MANIFEST_SCHEMA_PATH = CONTRACTS_DIR / "ota_bundle_manifest_v1.schema.json"
+WRAPPER_SCHEMA_PATH = CONTRACTS_DIR / "ota_multi_pack_bundle_v1.schema.json"
 
 
 # =============================================================================
@@ -463,6 +464,131 @@ class TestManifestSchemaValidation:
         computed = hashlib.sha256(schema_content).hexdigest()
 
         sha_path = MANIFEST_SCHEMA_PATH.with_suffix(".json.sha256")
+        assert sha_path.exists(), f"SHA256 sidecar not found: {sha_path}"
+        expected = sha_path.read_text().strip()
+
+        assert computed == expected, f"Schema hash mismatch: {computed} != {expected}"
+
+
+# =============================================================================
+# Wrapper Manifest (Device-Loader Contract) Tests
+# =============================================================================
+
+
+@pytest.mark.skipif(not HAS_JSONSCHEMA, reason="jsonschema not installed")
+class TestWrapperManifestContract:
+    """Validate multi-pack wrapper manifest against device-loader contract."""
+
+    @pytest.fixture(scope="class")
+    def wrapper_schema(self):
+        """Load the wrapper manifest schema once per test class."""
+        assert WRAPPER_SCHEMA_PATH.exists(), f"Schema not found: {WRAPPER_SCHEMA_PATH}"
+        return json.loads(WRAPPER_SCHEMA_PATH.read_text())
+
+    def test_wrapper_manifest_validates_against_schema(self, tmp_path: Path, wrapper_schema):
+        """bundle_manifest.json passes schema validation."""
+        sgc_main([
+            "ota-bundle",
+            "--dance-pack-set", "groove_foundations_v1",
+            "--multi-pack",
+            "--out", str(tmp_path),
+        ])
+
+        # Find the wrapper directory
+        top_manifest = json.loads((tmp_path / "ota_manifest.json").read_text())
+        assert top_manifest["mode"] == "multi-pack"
+
+        bundle_dir = Path(top_manifest["outputs"][0]["bundle_dir"])
+        wrapper_manifest_path = bundle_dir / "bundle_manifest.json"
+        assert wrapper_manifest_path.exists()
+
+        wrapper_manifest = json.loads(wrapper_manifest_path.read_text())
+        jsonschema.validate(instance=wrapper_manifest, schema=wrapper_schema)
+
+    def test_wrapper_manifest_has_manifest_path(self, tmp_path: Path):
+        """Each pack entry has manifest_path field."""
+        sgc_main([
+            "ota-bundle",
+            "--dance-pack-set", "groove_foundations_v1",
+            "--multi-pack",
+            "--out", str(tmp_path),
+        ])
+
+        top_manifest = json.loads((tmp_path / "ota_manifest.json").read_text())
+        bundle_dir = Path(top_manifest["outputs"][0]["bundle_dir"])
+        wrapper_manifest = json.loads((bundle_dir / "bundle_manifest.json").read_text())
+
+        for pack in wrapper_manifest["packs"]:
+            assert "manifest_path" in pack
+            assert "sub_bundle_dir" in pack
+            assert pack["manifest_path"].endswith("/manifest.json") or pack["manifest_path"].endswith("\\manifest.json")
+
+    def test_wrapper_manifest_paths_exist(self, tmp_path: Path):
+        """All paths in wrapper manifest point to existing files."""
+        sgc_main([
+            "ota-bundle",
+            "--dance-pack-set", "groove_foundations_v1",
+            "--multi-pack",
+            "--out", str(tmp_path),
+        ])
+
+        top_manifest = json.loads((tmp_path / "ota_manifest.json").read_text())
+        bundle_dir = Path(top_manifest["outputs"][0]["bundle_dir"])
+        wrapper_manifest = json.loads((bundle_dir / "bundle_manifest.json").read_text())
+
+        for pack in wrapper_manifest["packs"]:
+            # sub_bundle_dir should exist
+            sub_dir = bundle_dir / pack["sub_bundle_dir"]
+            assert sub_dir.exists(), f"Sub-bundle dir missing: {sub_dir}"
+            assert sub_dir.is_dir()
+
+            # manifest_path should exist
+            manifest_file = bundle_dir / pack["manifest_path"]
+            assert manifest_file.exists(), f"Manifest missing: {manifest_file}"
+            assert manifest_file.is_file()
+
+            # manifest should be valid JSON
+            manifest_content = json.loads(manifest_file.read_text())
+            assert "schema_id" in manifest_content
+
+    def test_wrapper_manifest_paths_no_traversal(self, tmp_path: Path):
+        """Wrapper manifest paths don't escape the bundle directory."""
+        sgc_main([
+            "ota-bundle",
+            "--dance-pack-set", "groove_foundations_v1",
+            "--multi-pack",
+            "--out", str(tmp_path),
+        ])
+
+        top_manifest = json.loads((tmp_path / "ota_manifest.json").read_text())
+        bundle_dir = Path(top_manifest["outputs"][0]["bundle_dir"]).resolve()
+        wrapper_manifest = json.loads((bundle_dir / "bundle_manifest.json").read_text())
+
+        for pack in wrapper_manifest["packs"]:
+            # Check sub_bundle_dir doesn't escape
+            sub_resolved = (bundle_dir / pack["sub_bundle_dir"]).resolve()
+            assert str(sub_resolved).startswith(str(bundle_dir)), (
+                f"Path traversal detected in sub_bundle_dir: {pack['sub_bundle_dir']}"
+            )
+
+            # Check manifest_path doesn't escape
+            manifest_resolved = (bundle_dir / pack["manifest_path"]).resolve()
+            assert str(manifest_resolved).startswith(str(bundle_dir)), (
+                f"Path traversal detected in manifest_path: {pack['manifest_path']}"
+            )
+
+            # manifest_path should be inside sub_bundle_dir
+            assert str(manifest_resolved).startswith(str(sub_resolved)), (
+                f"manifest_path not inside sub_bundle_dir: {pack['manifest_path']}"
+            )
+
+    def test_wrapper_schema_sha256_matches(self):
+        """Wrapper schema file hash matches .sha256 sidecar."""
+        import hashlib
+        schema_content = WRAPPER_SCHEMA_PATH.read_bytes()
+        computed = hashlib.sha256(schema_content).hexdigest()
+
+        sha_path = WRAPPER_SCHEMA_PATH.with_suffix(".json.sha256")
         assert sha_path.exists(), f"SHA256 sidecar not found: {sha_path}"
         expected = sha_path.read_text().strip()
 
