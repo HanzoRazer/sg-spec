@@ -18,6 +18,7 @@ import argparse
 import json
 import sys
 import tempfile
+import time
 import zipfile
 from pathlib import Path
 
@@ -262,7 +263,9 @@ def cmd_ota_bundle(args: argparse.Namespace) -> int:
 
     Session mode: SessionRecord -> CoachEvaluation -> PracticeAssignment -> OTA bundle
     Pack set mode: Pack Set -> per-pack assignment defaults -> multiple OTA bundles
+    Multi-pack mode: Combined pack-of-packs bundle with top-level manifest
     """
+    started = time.time()
     make_zip = bool(args.zip)
 
     # HMAC secret if provided
@@ -272,12 +275,28 @@ def cmd_ota_bundle(args: argparse.Namespace) -> int:
     elif args.secret_file:
         hmac_secret = Path(args.secret_file).read_bytes().strip()
 
+    # Selector exclusivity validation
+    selectors = [
+        bool(getattr(args, "session", None)),
+        bool(getattr(args, "dance_pack_set", None)),
+        bool(getattr(args, "dance_pack_set_path", None)),
+    ]
+    if sum(selectors) > 1:
+        print("ERROR: Choose only one: --session | --dance-pack-set | --dance-pack-set-path", file=sys.stderr)
+        return 1
+
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = Path(args.manifest) if args.manifest else out_dir / "ota_manifest.json"
+
     # Pack set mode: expand set into per-pack bundles
     pack_set_id = getattr(args, "dance_pack_set", None)
     pack_set_path = getattr(args, "dance_pack_set_path", None)
 
     if pack_set_id or pack_set_path:
-        return _build_bundles_from_pack_set(args, hmac_secret, make_zip)
+        return _build_bundles_from_pack_set(
+            args, hmac_secret, make_zip, started, manifest_path
+        )
 
     # Session mode (original behavior)
     if not args.session:
@@ -293,7 +312,7 @@ def cmd_ota_bundle(args: argparse.Namespace) -> int:
 
     res = build_assignment_ota_bundle(
         assignment=assignment,
-        out_dir=args.out,
+        out_dir=str(out_dir),
         bundle_name=args.name,
         product=args.product,
         target_device_model=args.device_model,
@@ -303,9 +322,27 @@ def cmd_ota_bundle(args: argparse.Namespace) -> int:
         hmac_secret=hmac_secret,
     )
 
+    # Write manifest for single-session mode
+    manifest = {
+        "schema_id": "ota_bundle_manifest",
+        "schema_version": "v1",
+        "mode": "single-session",
+        "generated_at_unix": int(started),
+        "elapsed_s": round(time.time() - started, 3),
+        "set": None,
+        "outputs": [
+            {
+                "bundle_dir": str(res.bundle_dir),
+                "zip_path": str(res.zip_path) if res.zip_path else None,
+            }
+        ],
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+
     print(str(res.bundle_dir))
     if res.zip_path is not None:
         print(str(res.zip_path))
+    print(f"Manifest: {manifest_path}")
 
     return 0
 
@@ -314,9 +351,15 @@ def _build_bundles_from_pack_set(
     args: argparse.Namespace,
     hmac_secret: bytes | None,
     make_zip: bool,
+    started: float,
+    manifest_path: Path,
 ) -> int:
     """
-    Build one OTA bundle per pack in a pack set.
+    Build OTA bundles from a pack set.
+
+    Modes:
+    - per-pack (default): one bundle per pack in the set
+    - multi-pack (--multi-pack): combined pack-of-packs bundle
 
     Returns:
         0 on success, non-zero on error
@@ -336,16 +379,29 @@ def _build_bundles_from_pack_set(
     # Get assignment defaults for all packs
     set_defaults = get_pack_defaults_from_set(pack_set)
 
-    # Build manifest of generated bundles
-    manifest = {
-        "set_id": pack_set.id,
-        "set_display_name": pack_set.display_name,
+    # Get pack IDs and build set summary
+    pack_ids = [b.pack_id for b in set_defaults.packs]
+    set_summary = {
+        "id": pack_set.id,
+        "display_name": pack_set.display_name,
         "tier": pack_set.tier,
-        "bundles": [],
+        "pack_count": len(pack_ids),
     }
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    multi_pack = getattr(args, "multi_pack", False)
+
+    if multi_pack:
+        # Combined pack-of-packs mode
+        return _build_multi_pack_bundle(
+            args, pack_set, set_defaults, set_summary, pack_ids,
+            out_dir, hmac_secret, make_zip, started, manifest_path
+        )
+
+    # Per-pack mode (default)
+    outputs = []
 
     for binding in set_defaults.packs:
         pack_id = binding.pack_id
@@ -356,7 +412,7 @@ def _build_bundles_from_pack_set(
         assignment = _plan_assignment_from_pack_defaults(pack_id, defaults, pack)
 
         # Build bundle with pack-specific name
-        bundle_name = args.name or f"{pack_set.id}_{pack_id}"
+        bundle_name = f"ota_bundle__{pack_id}"
 
         res = build_assignment_ota_bundle(
             assignment=assignment,
@@ -370,20 +426,125 @@ def _build_bundles_from_pack_set(
             hmac_secret=hmac_secret,
         )
 
-        bundle_info = {
-            "pack_id": pack_id,
+        output_info = {
+            "dance_pack_id": pack_id,
             "display_name": pack.metadata.display_name,
             "bundle_dir": str(res.bundle_dir),
+            "zip_path": str(res.zip_path) if res.zip_path else None,
         }
-        if res.zip_path:
-            bundle_info["zip_path"] = str(res.zip_path)
-
-        manifest["bundles"].append(bundle_info)
+        outputs.append(output_info)
         print(f"Created: {res.bundle_dir}")
 
-    # Write manifest
-    manifest_path = out_dir / f"{pack_set.id}_manifest.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    # Write versioned manifest
+    manifest = {
+        "schema_id": "ota_bundle_manifest",
+        "schema_version": "v1",
+        "mode": "per-pack",
+        "generated_at_unix": int(started),
+        "elapsed_s": round(time.time() - started, 3),
+        "set": {"id": pack_set.id, "pack_ids": pack_ids, "summary": set_summary},
+        "outputs": outputs,
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    print(f"Manifest: {manifest_path}")
+
+    return 0
+
+
+def _build_multi_pack_bundle(
+    args: argparse.Namespace,
+    pack_set,
+    set_defaults,
+    set_summary: dict,
+    pack_ids: list[str],
+    out_dir: Path,
+    hmac_secret: bytes | None,
+    make_zip: bool,
+    started: float,
+    manifest_path: Path,
+) -> int:
+    """
+    Build a combined multi-pack bundle (pack-of-packs).
+
+    Creates a top-level directory containing per-pack subdirectories,
+    optionally zipped into a single archive.
+    """
+    import shutil
+
+    bundle_name = f"ota_bundle__{pack_set.id}"
+    bundle_dir = out_dir / bundle_name
+    bundle_dir.mkdir(parents=True, exist_ok=True)
+
+    sub_outputs = []
+
+    for binding in set_defaults.packs:
+        pack_id = binding.pack_id
+        defaults = binding.defaults
+        pack = binding.pack
+
+        # Create assignment from pack defaults
+        assignment = _plan_assignment_from_pack_defaults(pack_id, defaults, pack)
+
+        # Build sub-bundle inside the multi-pack directory
+        sub_bundle_name = pack_id
+
+        res = build_assignment_ota_bundle(
+            assignment=assignment,
+            out_dir=str(bundle_dir),
+            bundle_name=sub_bundle_name,
+            product=args.product,
+            target_device_model=args.device_model,
+            target_min_firmware=args.min_firmware,
+            attachments=None,
+            make_zip=False,  # Don't zip individual sub-bundles
+            hmac_secret=hmac_secret,
+        )
+
+        sub_outputs.append({
+            "dance_pack_id": pack_id,
+            "display_name": pack.metadata.display_name,
+            "sub_bundle_dir": str(res.bundle_dir.relative_to(bundle_dir)),
+        })
+        print(f"  Sub-bundle: {pack_id}")
+
+    # Write internal manifest inside the multi-pack bundle
+    internal_manifest = {
+        "schema_id": "ota_multi_pack_bundle",
+        "schema_version": "v1",
+        "set_id": pack_set.id,
+        "set_display_name": pack_set.display_name,
+        "tier": pack_set.tier,
+        "pack_count": len(pack_ids),
+        "packs": sub_outputs,
+    }
+    (bundle_dir / "bundle_manifest.json").write_text(
+        json.dumps(internal_manifest, indent=2, sort_keys=True), encoding="utf-8"
+    )
+
+    # Optionally zip the entire multi-pack bundle
+    zip_path = None
+    if make_zip:
+        zip_path = out_dir / f"{bundle_name}.zip"
+        shutil.make_archive(str(zip_path.with_suffix("")), "zip", str(bundle_dir))
+        print(f"Created zip: {zip_path}")
+
+    # Write top-level manifest
+    manifest = {
+        "schema_id": "ota_bundle_manifest",
+        "schema_version": "v1",
+        "mode": "multi-pack",
+        "generated_at_unix": int(started),
+        "elapsed_s": round(time.time() - started, 3),
+        "set": {"id": pack_set.id, "pack_ids": pack_ids, "summary": set_summary},
+        "outputs": [{
+            "bundle_dir": str(bundle_dir),
+            "zip_path": str(zip_path) if zip_path else None,
+            "packs": sub_outputs,
+        }],
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+
+    print(f"Created: {bundle_dir}")
     print(f"Manifest: {manifest_path}")
 
     return 0
@@ -554,7 +715,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_b.add_argument("--session", default=None, help="Path to session.json (SessionRecord).")
     p_b.add_argument("--dance-pack-set", default=None, help="Pack set ID to expand into per-pack bundles.")
     p_b.add_argument("--dance-pack-set-path", default=None, help="Path to pack set YAML file.")
+    p_b.add_argument("--multi-pack", action="store_true", help="Emit single combined multi-pack bundle (default: one bundle per pack).")
     p_b.add_argument("--out", required=True, help="Output directory root.")
+    p_b.add_argument("--manifest", default=None, help="Custom manifest path (default: <out>/ota_manifest.json).")
     p_b.add_argument("--name", default=None, help="Optional bundle folder name override.")
     p_b.add_argument("--product", default="smart-guitar", help="Product name (manifest routing).")
     p_b.add_argument("--device-model", default=None, help="Target device model.")
