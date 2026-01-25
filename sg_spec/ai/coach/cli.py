@@ -5,8 +5,9 @@ Commands:
 - sgc export-bundle: Build firmware envelope from evaluation + assignment
 - sgc ota-pack: Build OTA payload with HMAC signature
 - sgc ota-verify: Verify HMAC-signed OTA payload
-- sgc ota-bundle: Build OTA folder/zip bundle from SessionRecord
+- sgc ota-bundle: Build OTA folder/zip bundle (from SessionRecord or Pack Set)
 - sgc ota-verify-zip: Verify bundle.zip integrity
+- sgc dance-pack-list: List bundled dance packs
 - sgc dance-pack-set-list: List bundled dance pack sets
 - sgc dance-pack-set-validate: Validate pack set references
 - sgc dance-pack-set-show: Show pack set summary
@@ -20,7 +21,18 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-from .schemas import ProgramRef, ProgramType, SessionRecord
+from uuid import uuid4, uuid5, NAMESPACE_DNS
+
+from .schemas import (
+    AssignmentConstraints,
+    AssignmentFocus,
+    CoachPrompt,
+    PracticeAssignment,
+    ProgramRef,
+    ProgramType,
+    SessionRecord,
+    SuccessCriteria,
+)
 from .coach_policy import evaluate_session
 from .assignment_policy import plan_assignment
 from .assignment_serializer import serialize_bundle
@@ -78,6 +90,73 @@ def _find_bundle_root(extract_dir: Path) -> Path:
     if len(matches) > 1:
         raise ValueError("multiple manifest.json found in zip (ambiguous)")
     return matches[0].parent
+
+
+
+def _plan_assignment_from_pack_defaults(
+    pack_id: str,
+    defaults,  # AssignmentDefaults
+    pack,  # DancePackV1
+) -> PracticeAssignment:
+    """
+    Create a PracticeAssignment directly from pack defaults.
+
+    Used in pack-set mode where we don't have a session/evaluation.
+    Creates deterministic IDs based on pack_id for reproducibility.
+    """
+    # Deterministic IDs from pack_id
+    session_id = uuid5(NAMESPACE_DNS, f"pack-default-session:{pack_id}")
+    assignment_id = uuid5(NAMESPACE_DNS, f"pack-default-assignment:{pack_id}")
+
+    # Build constraints from pack defaults
+    constraints = AssignmentConstraints(
+        tempo_start=int(defaults.tempo_start_bpm),
+        tempo_target=int(defaults.tempo_target_bpm),
+        tempo_step=5,
+        strict=True,
+        strict_window_ms=defaults.strict_window_ms,
+        bars_per_loop=defaults.bars_per_loop,
+        repetitions=8,
+    )
+
+    # Use pack's primary focus
+    primary_focus = "groove"
+    if pack.practice_mapping.primary_focus:
+        primary_focus = pack.practice_mapping.primary_focus[0]
+
+    focus = AssignmentFocus(
+        primary=primary_focus,
+        secondary=None,
+    )
+
+    # Default success criteria
+    success = SuccessCriteria(
+        max_mean_error_ms=30.0,
+        max_late_drops=3,
+    )
+
+    # Coach prompt for pack-based assignment
+    prompt = CoachPrompt(
+        mode="optional",
+        message=f"Practice {pack.metadata.display_name} at comfortable tempo.",
+    )
+
+    # Create program ref for this pack
+    program = ProgramRef(
+        type=ProgramType.ztprog,
+        id=pack_id,
+    )
+
+    return PracticeAssignment(
+        assignment_id=assignment_id,
+        session_id=session_id,
+        program=program,
+        constraints=constraints,
+        focus=focus,
+        success_criteria=success,
+        coach_prompt=prompt,
+        expires_after_sessions=5,
+    )
 
 
 # ============================================================================
@@ -179,16 +258,11 @@ def cmd_ota_verify_hmac(args: argparse.Namespace) -> int:
 
 def cmd_ota_bundle(args: argparse.Namespace) -> int:
     """
-    Build an OTA bundle folder/zip from a SessionRecord JSON.
-    Mode 1 pipeline: SessionRecord -> CoachEvaluation -> PracticeAssignment -> OTA bundle.
+    Build OTA bundle(s) from SessionRecord or Pack Set.
+
+    Session mode: SessionRecord -> CoachEvaluation -> PracticeAssignment -> OTA bundle
+    Pack set mode: Pack Set -> per-pack assignment defaults -> multiple OTA bundles
     """
-    session_json = _read_text(args.session)
-    session = SessionRecord.model_validate_json(session_json)
-
-    ev = evaluate_session(session)
-    program = session.program_ref
-    assignment = plan_assignment(ev, program)
-
     make_zip = bool(args.zip)
 
     # HMAC secret if provided
@@ -197,6 +271,25 @@ def cmd_ota_bundle(args: argparse.Namespace) -> int:
         hmac_secret = args.secret.encode("utf-8")
     elif args.secret_file:
         hmac_secret = Path(args.secret_file).read_bytes().strip()
+
+    # Pack set mode: expand set into per-pack bundles
+    pack_set_id = getattr(args, "dance_pack_set", None)
+    pack_set_path = getattr(args, "dance_pack_set_path", None)
+
+    if pack_set_id or pack_set_path:
+        return _build_bundles_from_pack_set(args, hmac_secret, make_zip)
+
+    # Session mode (original behavior)
+    if not args.session:
+        print("ERROR: --session required (or use --dance-pack-set)", file=sys.stderr)
+        return 1
+
+    session_json = _read_text(args.session)
+    session = SessionRecord.model_validate_json(session_json)
+
+    ev = evaluate_session(session)
+    program = session.program_ref
+    assignment = plan_assignment(ev, program)
 
     res = build_assignment_ota_bundle(
         assignment=assignment,
@@ -213,6 +306,85 @@ def cmd_ota_bundle(args: argparse.Namespace) -> int:
     print(str(res.bundle_dir))
     if res.zip_path is not None:
         print(str(res.zip_path))
+
+    return 0
+
+
+def _build_bundles_from_pack_set(
+    args: argparse.Namespace,
+    hmac_secret: bytes | None,
+    make_zip: bool,
+) -> int:
+    """
+    Build one OTA bundle per pack in a pack set.
+
+    Returns:
+        0 on success, non-zero on error
+    """
+    # Load pack set
+    pack_set_id = getattr(args, "dance_pack_set", None)
+    pack_set_path = getattr(args, "dance_pack_set_path", None)
+
+    if pack_set_path:
+        pack_set = load_set_from_file(pack_set_path)
+    else:
+        pack_set = load_set_by_id(pack_set_id)
+
+    # Validate all packs exist
+    validate_set_references(pack_set)
+
+    # Get assignment defaults for all packs
+    set_defaults = get_pack_defaults_from_set(pack_set)
+
+    # Build manifest of generated bundles
+    manifest = {
+        "set_id": pack_set.id,
+        "set_display_name": pack_set.display_name,
+        "tier": pack_set.tier,
+        "bundles": [],
+    }
+
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    for binding in set_defaults.packs:
+        pack_id = binding.pack_id
+        defaults = binding.defaults
+        pack = binding.pack
+
+        # Create assignment from pack defaults
+        assignment = _plan_assignment_from_pack_defaults(pack_id, defaults, pack)
+
+        # Build bundle with pack-specific name
+        bundle_name = args.name or f"{pack_set.id}_{pack_id}"
+
+        res = build_assignment_ota_bundle(
+            assignment=assignment,
+            out_dir=str(out_dir),
+            bundle_name=bundle_name,
+            product=args.product,
+            target_device_model=args.device_model,
+            target_min_firmware=args.min_firmware,
+            attachments=None,
+            make_zip=make_zip,
+            hmac_secret=hmac_secret,
+        )
+
+        bundle_info = {
+            "pack_id": pack_id,
+            "display_name": pack.metadata.display_name,
+            "bundle_dir": str(res.bundle_dir),
+        }
+        if res.zip_path:
+            bundle_info["zip_path"] = str(res.zip_path)
+
+        manifest["bundles"].append(bundle_info)
+        print(f"Created: {res.bundle_dir}")
+
+    # Write manifest
+    manifest_path = out_dir / f"{pack_set.id}_manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    print(f"Manifest: {manifest_path}")
 
     return 0
 
@@ -378,8 +550,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_vh.set_defaults(func=cmd_ota_verify_hmac)
 
     # --- ota-bundle ---
-    p_b = sub.add_parser("ota-bundle", help="Build assignment OTA bundle folder/zip from SessionRecord.")
-    p_b.add_argument("--session", required=True, help="Path to session.json (SessionRecord).")
+    p_b = sub.add_parser("ota-bundle", help="Build OTA bundle(s) from SessionRecord or Pack Set.")
+    p_b.add_argument("--session", default=None, help="Path to session.json (SessionRecord).")
+    p_b.add_argument("--dance-pack-set", default=None, help="Pack set ID to expand into per-pack bundles.")
+    p_b.add_argument("--dance-pack-set-path", default=None, help="Path to pack set YAML file.")
     p_b.add_argument("--out", required=True, help="Output directory root.")
     p_b.add_argument("--name", default=None, help="Optional bundle folder name override.")
     p_b.add_argument("--product", default="smart-guitar", help="Product name (manifest routing).")
