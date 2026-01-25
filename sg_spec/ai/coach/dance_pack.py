@@ -232,7 +232,18 @@ def list_pack_paths() -> list[str]:
     if not base_dir.exists():
         return packs
 
-    families = ["afro_brazilian", "latin", "jazz_american", "rock_american"]
+    families = [
+        "afro_brazilian",
+        "latin",
+        "jazz_american",
+        "rock_american",
+        "country",
+        "funk",
+        "disco",
+        "hiphop",
+        "gospel",
+        "neo_soul",
+    ]
 
     for family in families:
         family_dir = base_dir / family
