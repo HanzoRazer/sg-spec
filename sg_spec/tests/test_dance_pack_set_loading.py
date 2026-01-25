@@ -23,9 +23,12 @@ def test_list_set_paths_returns_yaml_files():
 def test_load_groove_foundations_set():
     """Load the groove_foundations_v1 set."""
     ps = load_set_from_package("groove_foundations_v1.yaml")
+    assert ps.schema_id == "dance_pack_set"
+    assert ps.schema_version == "v1"
     assert ps.id == "groove_foundations_v1"
     assert ps.display_name == "Groove Foundations"
     assert len(ps.packs) == 5
+    assert "rock_straight_v1" in ps.packs
 
 
 def test_load_dominant_tension_set():
@@ -77,12 +80,16 @@ def test_pack_set_rejects_duplicate_pack_ids():
     """Pack sets should not contain duplicate pack_id entries."""
     with pytest.raises(ValueError, match="duplicate"):
         DancePackSetV1.model_validate({
-            "id": "test_set_v1",
-            "display_name": "Test Set",
-            "version": "1.0.0",
+            "schema_id": "dance_pack_set",
+            "schema_version": "v1",
+            "metadata": {
+                "id": "test_set_v1",
+                "display_name": "Test Set",
+                "version": "1.0.0",
+            },
             "packs": [
-                {"pack_id": "funk_16th_pocket_v1"},
-                {"pack_id": "funk_16th_pocket_v1"},  # duplicate
+                "funk_16th_pocket_v1",
+                "funk_16th_pocket_v1",  # duplicate
             ],
         })
 
@@ -91,8 +98,34 @@ def test_pack_set_requires_at_least_one_pack():
     """Pack sets must have at least one pack."""
     with pytest.raises(ValueError):
         DancePackSetV1.model_validate({
-            "id": "empty_set_v1",
-            "display_name": "Empty Set",
-            "version": "1.0.0",
+            "schema_id": "dance_pack_set",
+            "schema_version": "v1",
+            "metadata": {
+                "id": "empty_set_v1",
+                "display_name": "Empty Set",
+                "version": "1.0.0",
+            },
             "packs": [],
         })
+
+
+def test_pack_set_has_schema_fields():
+    """Pack set should have schema_id and schema_version at root."""
+    ps = load_set_from_package("groove_foundations_v1.yaml")
+    assert ps.schema_id == "dance_pack_set"
+    assert ps.schema_version == "v1"
+
+
+def test_pack_set_metadata_wrapper():
+    """Pack set metadata should be wrapped in metadata block."""
+    ps = load_set_from_package("groove_foundations_v1.yaml")
+    assert ps.metadata.id == "groove_foundations_v1"
+    assert ps.metadata.display_name == "Groove Foundations"
+    assert ps.metadata.tier == "core"
+
+
+def test_packs_are_string_list():
+    """Packs should be a list of string IDs, not objects."""
+    ps = load_set_from_package("groove_foundations_v1.yaml")
+    for pack_id in ps.packs:
+        assert isinstance(pack_id, str)

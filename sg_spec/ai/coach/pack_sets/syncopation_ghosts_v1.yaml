@@ -1,24 +1,21 @@
-id: syncopation_ghosts_v1
-display_name: Syncopation & Ghost Notes
-version: 1.0.0
-license: core
-engine_compatibility: '>=0.2.0'
-description:
-  short: Grooves where subdivision control and ghost-note discipline are central.
-  long: A pocket-focused set emphasizing syncopation, ghosts, pickups, and accent
-    lattice awareness.
+schema_id: dance_pack_set
+schema_version: v1
+
+metadata:
+  id: syncopation_ghosts_v1
+  display_name: Syncopation & Ghost Notes
+  version: "1.0.0"
+  tier: plus
+  sku: packs.syncopation_ghosts.v1
+  tags:
+    - syncopation
+    - ghosts
+    - pocket
+
 packs:
-- pack_id: funk_16th_pocket_v1
-- pack_id: samba_traditional_v1
-- pack_id: salsa_clave_locked_v1
-- pack_id: neo_soul_laidback_pocket_v1
-tags:
-- syncopation
-- ghosts
-- pocket
-- product_set
-sku: PACKSET-SYNCOPATION_GHOSTS_V1
-tier: plus
-unlock:
-  flags: []
-  requires: []
+  - funk_16th_pocket_v1
+  - samba_traditional_v1
+  - salsa_clave_locked_v1
+  - neo_soul_laidback_pocket_v1
+
+extensions: {}

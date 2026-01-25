@@ -9,6 +9,13 @@ Design goals:
   - No executable logic inside sets; sets only reference pack_id(s)
   - Optional monetization metadata (SKU/tier/unlock flags) that does NOT affect behavior
 
+Schema structure (v1):
+  schema_id: dance_pack_set
+  schema_version: v1
+  metadata: { id, display_name, version, tier?, sku?, tags? }
+  packs: [ "pack_id_1", "pack_id_2", ... ]
+  extensions: {}
+
 This module provides:
   - Pydantic models for DancePackSetV1
   - YAML loader (package resources or filesystem)
@@ -20,7 +27,7 @@ from __future__ import annotations
 
 from importlib import resources
 from pathlib import Path
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -35,51 +42,59 @@ from .dance_pack import load_pack_by_id
 Tier = Literal["core", "plus", "pro"]
 
 
-class DescriptionV1(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    short: str
-    long: str
-
-
-class UnlockV1(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    flags: List[str] = Field(default_factory=list)
-    requires: List[str] = Field(default_factory=list)
-
-
-class PackRefV1(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    pack_id: str = Field(..., min_length=1, max_length=128)
-
-
-class DancePackSetV1(BaseModel):
-    """Dance Pack Set v1 - curated collection of Dance Packs."""
+class PackSetMetadata(BaseModel):
+    """Metadata block for a Dance Pack Set."""
 
     model_config = ConfigDict(extra="forbid")
 
     id: str = Field(..., min_length=3, max_length=128)
     display_name: str = Field(..., min_length=1, max_length=200)
     version: str = Field(..., min_length=1, max_length=50)
-
-    license: str = Field(default="core", min_length=1, max_length=64)
-    engine_compatibility: str = Field(default=">=0.0.0", min_length=1, max_length=64)
-
-    description: Optional[DescriptionV1] = None
-
-    # Monetization metadata (optional; does not affect behavior)
-    sku: Optional[str] = Field(default=None, min_length=3, max_length=128)
     tier: Tier = Field(default="core")
-    unlock: UnlockV1 = Field(default_factory=UnlockV1)
+    sku: Optional[str] = Field(default=None, min_length=3, max_length=128)
     tags: List[str] = Field(default_factory=list)
 
-    packs: List[PackRefV1] = Field(..., min_length=1)
+
+class DancePackSetV1(BaseModel):
+    """Dance Pack Set v1 - curated collection of Dance Packs.
+
+    Root-level schema_id and schema_version enable contract validation.
+    Metadata is wrapped in a dedicated block.
+    Packs is a simple list of pack ID strings.
+    Extensions dict is reserved for forward compatibility.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_id: Literal["dance_pack_set"] = Field(default="dance_pack_set")
+    schema_version: Literal["v1"] = Field(default="v1")
+
+    metadata: PackSetMetadata
+    packs: List[str] = Field(..., min_length=1)
+    extensions: Dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _unique_pack_ids(self) -> "DancePackSetV1":
-        ids = [p.pack_id for p in self.packs]
-        if len(set(ids)) != len(ids):
+        if len(set(self.packs)) != len(self.packs):
             raise ValueError("Pack set contains duplicate pack_id entries.")
         return self
+
+    # Convenience properties for backward compatibility and ease of use
+    @property
+    def id(self) -> str:
+        return self.metadata.id
+
+    @property
+    def display_name(self) -> str:
+        return self.metadata.display_name
+
+    @property
+    def tier(self) -> Tier:
+        return self.metadata.tier
+
+    @property
+    def tags(self) -> List[str]:
+        return self.metadata.tags
 
 
 # ---------------------------------------------------------------------------
@@ -141,5 +156,5 @@ def list_all_sets() -> List[DancePackSetV1]:
 
 def validate_set_references(pack_set: DancePackSetV1) -> None:
     """Ensure that every referenced pack_id exists as a bundled Dance Pack."""
-    for item in pack_set.packs:
-        _ = load_pack_by_id(item.pack_id)
+    for pack_id in pack_set.packs:
+        _ = load_pack_by_id(pack_id)
