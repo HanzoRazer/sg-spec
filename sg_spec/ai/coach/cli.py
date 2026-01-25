@@ -7,6 +7,9 @@ Commands:
 - sgc ota-verify: Verify HMAC-signed OTA payload
 - sgc ota-bundle: Build OTA folder/zip bundle from SessionRecord
 - sgc ota-verify-zip: Verify bundle.zip integrity
+- sgc dance-pack-set-list: List bundled dance pack sets
+- sgc dance-pack-set-validate: Validate pack set references
+- sgc dance-pack-set-show: Show pack set summary
 """
 from __future__ import annotations
 
@@ -28,6 +31,21 @@ from .ota_payload import (
     verify_bundle_integrity,
     verify_zip_bundle,
 )
+# Dance Pack imports
+from .dance_pack import load_pack_by_id, pack_to_assignment_defaults, list_pack_ids
+from .dance_pack_set import (
+    DancePackSetV1,
+    load_set_by_id,
+    load_set_from_file,
+    list_all_sets,
+    validate_set_references,
+)
+from .pack_set_policy import (
+    get_pack_defaults_from_set,
+    get_pack_defaults_from_set_id,
+    summarize_pack_set,
+)
+
 
 
 def _read_text(path: str | Path) -> str:
@@ -236,6 +254,100 @@ def cmd_ota_verify_zip(args: argparse.Namespace) -> int:
         return 1
 
 
+
+
+# ============================================================================
+# Commands: Dance Pack Sets
+# ============================================================================
+
+
+def cmd_dance_pack_set_list(args: argparse.Namespace) -> int:
+    """
+    List all bundled dance pack sets.
+    """
+    sets = list_all_sets()
+    
+    if args.json:
+        data = [
+            {
+                "id": s.id,
+                "display_name": s.display_name,
+                "tier": s.tier,
+                "pack_count": len(s.packs),
+            }
+            for s in sets
+        ]
+        print(json.dumps(data, indent=2))
+    else:
+        for s in sets:
+            print(f"{s.id}  ({s.tier})  {s.display_name}  [{len(s.packs)} packs]")
+    
+    return 0
+
+
+def cmd_dance_pack_set_validate(args: argparse.Namespace) -> int:
+    """
+    Validate a pack set (bundled or from file).
+    Checks that all referenced pack IDs exist.
+    """
+    try:
+        if args.path:
+            pack_set = load_set_from_file(args.path)
+        else:
+            pack_set = load_set_by_id(args.set_id)
+        
+        validate_set_references(pack_set)
+        
+        if not args.quiet:
+            print(f"OK: {pack_set.id} ({len(pack_set.packs)} packs)")
+            for pid in pack_set.packs:
+                print(f"  - {pid}")
+        
+        return 0
+    except Exception as e:
+        print(f"FAIL: {e}", file=sys.stderr)
+        return 2
+
+
+def cmd_dance_pack_set_show(args: argparse.Namespace) -> int:
+    """
+    Show detailed summary of a pack set.
+    """
+    try:
+        summary = summarize_pack_set(args.set_id)
+        
+        if args.json:
+            print(json.dumps(summary, indent=2))
+        else:
+            print(f"Set: {summary['display_name']} ({summary['id']})")
+            print(f"Tier: {summary['tier']}")
+            print(f"Tags: {', '.join(summary['tags']) if summary['tags'] else '(none)'}")
+            print(f"Packs ({summary['pack_count']}):")
+            for p in summary['packs']:
+                print(f"  - {p['pack_id']}: {p['display_name']}")
+                print(f"      {p['difficulty']} | {p['tempo_range']} | {p['subdivision']}")
+        
+        return 0
+    except KeyError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
+
+
+def cmd_dance_pack_list(args: argparse.Namespace) -> int:
+    """
+    List all bundled dance packs.
+    """
+    pack_ids = list_pack_ids()
+    
+    if args.json:
+        print(json.dumps(pack_ids, indent=2))
+    else:
+        for pid in pack_ids:
+            print(pid)
+    
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser."""
     p = argparse.ArgumentParser(
@@ -289,6 +401,30 @@ def build_parser() -> argparse.ArgumentParser:
     p_z.add_argument("--secret", default=None, help="HMAC secret for signature verification.")
     p_z.add_argument("--secret-file", default=None, help="Path to file containing HMAC secret.")
     p_z.set_defaults(func=cmd_ota_verify_zip)
+
+
+    # --- dance-pack-list ---
+    p_dpl = sub.add_parser("dance-pack-list", help="List all bundled dance packs.")
+    p_dpl.add_argument("--json", action="store_true", help="Output as JSON.")
+    p_dpl.set_defaults(func=cmd_dance_pack_list)
+
+    # --- dance-pack-set-list ---
+    p_dsl = sub.add_parser("dance-pack-set-list", help="List all bundled dance pack sets.")
+    p_dsl.add_argument("--json", action="store_true", help="Output as JSON.")
+    p_dsl.set_defaults(func=cmd_dance_pack_set_list)
+
+    # --- dance-pack-set-validate ---
+    p_dsv = sub.add_parser("dance-pack-set-validate", help="Validate pack set references.")
+    p_dsv.add_argument("set_id", nargs="?", help="Pack set ID (bundled).")
+    p_dsv.add_argument("--path", default=None, help="Path to pack set YAML file.")
+    p_dsv.add_argument("--quiet", "-q", action="store_true", help="Suppress output on success.")
+    p_dsv.set_defaults(func=cmd_dance_pack_set_validate)
+
+    # --- dance-pack-set-show ---
+    p_dss = sub.add_parser("dance-pack-set-show", help="Show pack set summary.")
+    p_dss.add_argument("set_id", help="Pack set ID.")
+    p_dss.add_argument("--json", action="store_true", help="Output as JSON.")
+    p_dss.set_defaults(func=cmd_dance_pack_set_show)
 
     return p
 
