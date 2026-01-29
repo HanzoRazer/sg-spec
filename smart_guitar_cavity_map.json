@@ -1,0 +1,435 @@
+{
+  "$schema": "smart_guitar_cavity_map_v1",
+  "schema_version": "1.0.0",
+  "generated": "2026-01-29T00:00:00Z",
+  "description": "Smart Guitar cavity layout derived from Les Paul body geometry with electronics stack accommodation",
+
+  "base_model": {
+    "id": "les_paul",
+    "display_name": "Gibson Les Paul",
+    "manufacturer": "Gibson",
+    "category": "electric_guitar",
+    "source": "luthiers-toolbox/instrument_geometry"
+  },
+
+  "body_geometry": {
+    "outline_source": "luthiers-toolbox:body/dxf/electric/LesPaul_body.dxf",
+    "point_count": 669,
+    "units": "mm",
+    "dimensions": {
+      "width_mm": 383.5,
+      "height_mm": 269.2,
+      "nominal_width_mm": 330.0,
+      "nominal_length_mm": 440.0,
+      "thickness_in": 1.75,
+      "thickness_mm": 44.45
+    },
+    "scale_length_mm": 628.65,
+    "fret_count": 22,
+    "nut_width_mm": 43.0,
+    "fretboard_radius_mm": 304.8
+  },
+
+  "body_constraints": {
+    "rim_min_in": 0.50,
+    "rim_min_mm": 12.7,
+    "top_skin_min_in": 0.30,
+    "top_skin_min_mm": 7.62,
+    "spine_width_min_in": 1.50,
+    "spine_width_min_mm": 38.1,
+    "max_hollow_depth_in": 1.20,
+    "max_hollow_depth_mm": 30.48,
+    "notes": [
+      "Rim maintains structural integrity at body edges",
+      "Top skin preserves acoustic coupling and strength",
+      "Spine runs centerline, carries string tension load"
+    ]
+  },
+
+  "cavities": {
+    "bass_chamber": {
+      "kind": "bass",
+      "template_id": "cavity_bass_main_v1",
+      "surface": "back",
+      "position": {
+        "zone": "bass_side",
+        "relative_to": "centerline",
+        "offset_direction": "bass",
+        "notes": "Lower bout, bass side of spine"
+      },
+      "depth_in": 1.20,
+      "depth_mm": 30.48,
+      "constraints": [
+        "Maintain rim_min from body edge",
+        "Do not cross centerline spine",
+        "Clear of neck pocket projection"
+      ],
+      "toolpath_op": "OP10"
+    },
+
+    "treble_chamber": {
+      "kind": "treble",
+      "template_id": "cavity_treble_main_v1",
+      "surface": "back",
+      "position": {
+        "zone": "treble_side",
+        "relative_to": "centerline",
+        "offset_direction": "treble",
+        "notes": "Lower bout, treble side of spine"
+      },
+      "depth_in": 1.20,
+      "depth_mm": 30.48,
+      "constraints": [
+        "Maintain rim_min from body edge",
+        "Do not cross centerline spine",
+        "Must not overlap pod keep-out zone"
+      ],
+      "toolpath_op": "OP10"
+    },
+
+    "tail_chamber": {
+      "kind": "tail",
+      "template_id": "cavity_tail_wing_v1",
+      "surface": "back",
+      "position": {
+        "zone": "tail_wing",
+        "relative_to": "bridge_line",
+        "offset_direction": "tailpiece",
+        "notes": "Behind bridge, tail end of body"
+      },
+      "depth_in": 1.20,
+      "depth_mm": 30.48,
+      "constraints": [
+        "Stability risk - consider web bridges",
+        "Avoid tailpiece stud mounting zones",
+        "Shallower if structural concerns"
+      ],
+      "toolpath_op": "OP10"
+    },
+
+    "electronics_pod": {
+      "kind": "pod",
+      "template_id_rh": "pod_rh_v1",
+      "template_id_lh": "pod_lh_v1",
+      "surface": "back",
+      "position": {
+        "zone": "upper_bout_treble",
+        "relative_to": "cutaway",
+        "offset_direction": "treble",
+        "notes": "Upper bout area, accessible via service cover"
+      },
+      "depth_in": 1.20,
+      "depth_mm": 30.48,
+      "access": "service_cover_required",
+      "constraints": [
+        "Must clear treble chamber",
+        "Requires lid/cover for maintenance",
+        "Cable routing to pickups and controls"
+      ],
+      "toolpath_op": "OP20",
+      "electronics_stack": {
+        "layout": "stacked_vertical",
+        "total_height_mm": 76.0,
+        "notes": "Pi5 base + HiFiBerry HAT stacked, Arduino alongside"
+      }
+    },
+
+    "pickup_neck": {
+      "kind": "pickup",
+      "template_id": "pickup_humbucker_neck_v1",
+      "surface": "top",
+      "position": {
+        "zone": "neck_position",
+        "relative_to": "scale_length",
+        "offset_from_bridge_mm": 152.4,
+        "notes": "Standard Les Paul neck pickup position"
+      },
+      "depth_in": 0.75,
+      "depth_mm": 19.05,
+      "dimensions": {
+        "length_mm": 82.0,
+        "width_mm": 38.0,
+        "corner_radius_mm": 4.0
+      },
+      "toolpath_op": "OP50"
+    },
+
+    "pickup_bridge": {
+      "kind": "pickup",
+      "template_id": "pickup_humbucker_bridge_v1",
+      "surface": "top",
+      "position": {
+        "zone": "bridge_position",
+        "relative_to": "bridge_line",
+        "offset_from_bridge_mm": 25.4,
+        "notes": "Standard Les Paul bridge pickup position"
+      },
+      "depth_in": 0.75,
+      "depth_mm": 19.05,
+      "dimensions": {
+        "length_mm": 82.0,
+        "width_mm": 38.0,
+        "corner_radius_mm": 4.0
+      },
+      "toolpath_op": "OP50"
+    },
+
+    "control_cavity": {
+      "kind": "control",
+      "template_id": "control_cavity_lp_v1",
+      "surface": "back",
+      "position": {
+        "zone": "lower_bout_treble",
+        "relative_to": "body_edge",
+        "notes": "Traditional LP control cavity location"
+      },
+      "depth_in": 1.25,
+      "depth_mm": 31.75,
+      "access": "plastic_cover",
+      "contents": [
+        "volume_pot_neck",
+        "volume_pot_bridge",
+        "tone_pot_neck",
+        "tone_pot_bridge",
+        "toggle_switch_wire",
+        "output_jack_wire"
+      ],
+      "notes": "May be repurposed or reduced with Smart Guitar electronics"
+    }
+  },
+
+  "wire_channels": {
+    "pickup_to_pod": {
+      "template_id": "wire_routes_rh_v1",
+      "from": "pickup_cavities",
+      "to": "electronics_pod",
+      "width_mm": 6.35,
+      "depth_mm": 12.7,
+      "toolpath_op": "OP30"
+    },
+    "pod_to_output": {
+      "template_id": "wire_routes_rh_v1",
+      "from": "electronics_pod",
+      "to": "output_jack",
+      "width_mm": 6.35,
+      "depth_mm": 12.7,
+      "toolpath_op": "OP30"
+    },
+    "battery_power": {
+      "template_id": "wire_routes_rh_v1",
+      "from": "battery_chamber",
+      "to": "electronics_pod",
+      "width_mm": 6.35,
+      "depth_mm": 12.7,
+      "via": "spine_channel",
+      "toolpath_op": "OP30"
+    }
+  },
+
+  "drill_passages": {
+    "template_id": "drill_passages_rh_v1",
+    "toolpath_op": "OP40",
+    "passages": [
+      {
+        "id": "toggle_switch",
+        "diameter_mm": 12.7,
+        "depth_mm": 19.05
+      },
+      {
+        "id": "output_jack",
+        "diameter_mm": 9.5,
+        "depth_mm": 38.1
+      }
+    ]
+  },
+
+  "electronics_components": {
+    "pi5": {
+      "id": "pi5",
+      "display_name": "Raspberry Pi 5",
+      "role": "Linux Music Brain",
+      "dimensions_mm": {
+        "width": 85.0,
+        "depth": 56.0,
+        "height": 18.0
+      },
+      "clearance_mm": {
+        "margin": 4.0,
+        "cable_bend_radius": 10.0
+      },
+      "mounting": {
+        "surface": "pod_floor",
+        "fastener": "M3",
+        "standoff_mm": 6.0
+      },
+      "notes": "Keep USB/HDMI clearance; prefer side access via pod lid"
+    },
+
+    "arduino_uno_r4": {
+      "id": "arduino_uno_r4",
+      "display_name": "Arduino Uno R4",
+      "role": "Hardware Constitution (I/O coprocessor)",
+      "dimensions_mm": {
+        "width": 68.6,
+        "depth": 53.4,
+        "height": 18.0
+      },
+      "clearance_mm": {
+        "margin": 3.0,
+        "cable_bend_radius": 8.0
+      },
+      "mounting": {
+        "surface": "pod_floor",
+        "fastener": "M3",
+        "standoff_mm": 6.0
+      },
+      "notes": "Treat as I/O coprocessor; isolate from audio traces"
+    },
+
+    "hifiberry_dac_adc": {
+      "id": "hifiberry_dac_adc",
+      "display_name": "HiFiBerry DAC+ADC",
+      "role": "Audio I/O (24-bit, 48-96kHz)",
+      "dimensions_mm": {
+        "width": 65.0,
+        "depth": 56.0,
+        "height": 24.0
+      },
+      "clearance_mm": {
+        "margin": 4.0,
+        "cable_bend_radius": 10.0
+      },
+      "mounting": {
+        "surface": "pod_floor",
+        "fastener": "standoff",
+        "standoff_mm": 10.0
+      },
+      "stacks_on": "pi5",
+      "notes": "Account for stacking height; ensure lid clearance"
+    },
+
+    "battery_pack": {
+      "id": "battery_pack",
+      "display_name": "Battery Pack + BMS",
+      "role": "Power supply (4x18650)",
+      "dimensions_mm": {
+        "width": 80.0,
+        "depth": 45.0,
+        "height": 18.0
+      },
+      "clearance_mm": {
+        "margin": 5.0,
+        "cable_bend_radius": 12.0
+      },
+      "mounting": {
+        "surface": "body_floor",
+        "fastener": "wood_screw",
+        "standoff_mm": 0.0
+      },
+      "location": "bass_chamber",
+      "notes": "Default placement: bass chamber; route power via spine channel"
+    },
+
+    "fan_40mm": {
+      "id": "fan_40mm",
+      "display_name": "40mm Cooling Fan",
+      "role": "Thermal management",
+      "dimensions_mm": {
+        "width": 40.0,
+        "depth": 40.0,
+        "height": 10.0
+      },
+      "clearance_mm": {
+        "margin": 2.0,
+        "cable_bend_radius": 6.0
+      },
+      "mounting": {
+        "surface": "pod_lid",
+        "fastener": "M3",
+        "standoff_mm": 0.0
+      },
+      "notes": "Requires vents in lid; otherwise thermal warning"
+    }
+  },
+
+  "toolpath_operations": {
+    "OP10": {
+      "name": "Hollow chambers rough",
+      "surface": "back",
+      "strategy": "2D_Adaptive",
+      "tool": "T2_1_4_UPCUT",
+      "targets": ["bass_chamber", "treble_chamber", "tail_chamber"]
+    },
+    "OP20": {
+      "name": "Pod cavity rough",
+      "surface": "back",
+      "strategy": "2D_Adaptive",
+      "tool": "T2_1_4_UPCUT",
+      "targets": ["electronics_pod"]
+    },
+    "OP30": {
+      "name": "Wire channels",
+      "surface": "back",
+      "strategy": "2D_Contour",
+      "tool": "T3_1_8_UPCUT",
+      "max_depth_in": 0.50,
+      "targets": ["wire_channels"]
+    },
+    "OP40": {
+      "name": "Drill passages",
+      "surface": "back",
+      "strategy": "Drill",
+      "tool": "T3_1_8_UPCUT",
+      "max_depth_in": 0.75,
+      "targets": ["drill_passages"]
+    },
+    "OP50": {
+      "name": "Pickup cavities",
+      "surface": "top",
+      "strategy": "2D_Pocket",
+      "tool": "T2_1_4_UPCUT",
+      "targets": ["pickup_neck", "pickup_bridge"]
+    }
+  },
+
+  "pi_mcu_event_contract": {
+    "description": "Communication protocol between Pi5 (Music Brain) and Arduino (Hardware Constitution)",
+    "principles": [
+      "Pi never controls hardware directly",
+      "MCU never 'understands music'",
+      "All events are declarative, not imperative",
+      "MCU may reject/modify/downscale any request"
+    ],
+    "event_types": [
+      {
+        "name": "HarmonyEvent",
+        "example": {"current_chord": "Gmaj7", "next_chord": "Cmaj7", "beats_until_change": 4}
+      },
+      {
+        "name": "TimeEvent",
+        "example": {"tempo_bpm": 120, "time_signature": "4/4", "current_beat": 2.5}
+      },
+      {
+        "name": "GuidanceEvent",
+        "example": {"message": "Move to 5th fret", "urgency": "suggestion"}
+      },
+      {
+        "name": "DisplayHintEvent",
+        "example": {"led_pattern": "fret_highlight", "frets": [5, 7, 9]}
+      }
+    ]
+  },
+
+  "provenance": {
+    "sources": [
+      "luthiers-toolbox:instrument_geometry/body/detailed_outlines.py",
+      "luthiers-toolbox:instrument_geometry/body/catalog.json",
+      "luthiers-toolbox:sandboxes/smart_guitar/presets.py",
+      "luthiers-toolbox:sandboxes/smart_guitar/planner.py",
+      "luthiers-toolbox:sandboxes/smart_guitar/validators.py",
+      "sg-spec:Smart Guitar_Chat 01_19_2026.docx"
+    ],
+    "generated_by": "ai-integrator design session",
+    "notes": "This file consolidates Smart Guitar cavity specifications from multiple sources into a single machine-readable reference."
+  }
+}
