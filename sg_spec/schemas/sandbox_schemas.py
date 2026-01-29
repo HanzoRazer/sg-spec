@@ -218,7 +218,11 @@ class ToolpathOp(BaseModel):
     """Toolpath operation."""
     op_id: str
     title: str
-    strategy: Literal["pocket", "contour", "drill"] = "pocket"
+    # Strategy names: CAM-style (2d_adaptive, 2d_pocket, 2d_contour, drill)
+    strategy: Literal[
+        "pocket", "contour", "drill",  # Simple names
+        "2d_adaptive", "2d_pocket", "2d_contour",  # CAM system names
+    ] = "pocket"
     tool: str = Field(..., description="Tool id")
     max_stepdown_in: float
     stepover_in: float
@@ -248,7 +252,13 @@ class SmartCamPlan(BaseModel):
 # =============================================================================
 
 DEFAULT_TOOLPATHS: Dict[str, Dict[str, Any]] = {
+    # Semantic names (human-readable)
     "quarter_upcut": {"max_stepdown_in": 0.125, "stepover_in": 0.11},
     "eighth_upcut": {"max_stepdown_in": 0.0625, "stepover_in": 0.06},
     "quarter_downcut": {"max_stepdown_in": 0.1875, "stepover_in": 0.12},
+    # Tool library IDs (CAM system integration)
+    # T2 = 1/4" endmill, T3 = 1/8" endmill
+    "T2_1_4_UPCUT": {"max_stepdown_in": 0.125, "stepover_in": 0.11},
+    "T2_1_4_DOWNCUT": {"max_stepdown_in": 0.1875, "stepover_in": 0.12},
+    "T3_1_8_UPCUT": {"max_stepdown_in": 0.0625, "stepover_in": 0.06},
 }
