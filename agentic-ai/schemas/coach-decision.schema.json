@@ -33,31 +33,37 @@
     "FeedbackIntent": {
       "type": "string",
       "enum": [
-        "timing_stability",
-        "subdivision_support",
-        "simplify_and_anchor",
-        "reduce_motion",
-        "backbeat_anchor",
-        "raise_challenge",
         "repeat_once",
-        "praise_then_increment"
+        "wait_for_count_in",
+        "start_on_downbeat",
+        "finish_two_bars",
+        "slow_down_enable_pulse",
+        "clarify_exercise_length",
+        "subdivision_support",
+        "backbeat_anchor",
+        "reduce_motion",
+        "timing_centering",
+        "raise_challenge"
       ],
-      "description": "The type of coaching feedback intent"
+      "description": "The type of coaching feedback intent (CoachIntent)"
     },
 
     "CueKey": {
       "type": "string",
       "examples": [
-        "aim_center_of_click",
-        "fewer_clear_hits",
-        "smaller_strum_more_space",
-        "add_pulse_then_repeat",
+        "one_more_take_same_tempo",
+        "wait_for_count_in_then_enter",
+        "start_on_downbeat",
+        "finish_two_bars_slow_if_needed",
+        "slow_down_and_use_pulse",
+        "stop_after_two_bars",
+        "add_subdivision_pulse",
         "emphasize_2_and_4",
-        "keep_hand_small",
-        "one_more_take",
-        "praise_then_increment"
+        "smaller_strum_less_extra",
+        "aim_center_of_click",
+        "nice_lock_in_bump_tempo"
       ],
-      "description": "Content key for the cue to deliver"
+      "description": "Content key for the cue to deliver (from cue bindings)"
     },
 
     "CoachDecision": {
