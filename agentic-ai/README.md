@@ -21,10 +21,14 @@ agentic-ai/
 ├── schemas/
 │   ├── guidance-policy.schema.json     # Policy matrix configuration
 │   ├── take-events.schema.json         # Segmenter I/O events
-│   └── coach-decision.schema.json      # Coach decision contracts
+│   ├── coach-decision.schema.json      # Coach decision contracts
+│   └── renderer-payloads.schema.json   # Renderer payload formats
 └── reference-impl/
     ├── guidance-engine.ts              # Policy engine implementation
-    └── take-segmenter.ts               # Take segmentation state machine
+    ├── take-segmenter.ts               # Take segmentation state machine
+    ├── analysis-to-intent.ts           # Bridge: TakeAnalysis → CoachIntent
+    ├── cue-bindings.ts                 # Cue binding table (intent → cue_key)
+    └── renderer-payloads.ts            # Pulse scheduling and payload builders
 ```
 
 ## Key Concepts
@@ -93,6 +97,16 @@ Coaching decision contracts:
 - `GuidanceRequest` - Request to policy engine
 - `GuidanceEnvelope` - Whether/when/how to deliver
 
+### renderer-payloads.schema.json
+
+Last-mile payload format for device/UI layer:
+- `RendererEnvelope` - Top-level delivery wrapper with musical context
+- `PulsePayload` - Subdivision/metronome/backbeat pulses with quantization
+- `CountInPayload` - Count-in sequence (ticks, spoken, flash)
+- `BarCounterPayload` - Visual bar progress indicator
+- `TextPromptPayload` - Text cue display
+- `CompositePayload` - Multiple synchronized payloads
+
 ## Reference Implementations
 
 ### GuidanceEngine (TypeScript)
@@ -130,6 +144,68 @@ for (const out of outputs) {
     analyzeAndCoach(out);
   }
 }
+```
+
+### AnalysisToIntent (TypeScript)
+
+Pure bridge from TakeAnalysis + flags → single CoachIntent.
+
+```typescript
+import { resolveCoachIntent, resolveWithDiagnostics } from './reference-impl/analysis-to-intent';
+
+// Simple resolution
+const intent = resolveCoachIntent(analysis, finalizeReason, flags);
+
+// With diagnostics
+const result = resolveWithDiagnostics(analysis, finalizeReason, flags);
+// { intent, analysis_confidence, gradeability, suppressed }
+```
+
+Priority order: mechanical issues (count-in, late start) → musical coaching (coverage, timing, drift).
+
+### CueBindings (TypeScript)
+
+Maps CoachIntent → cue_key, modalities, tone, renderer hints.
+
+```typescript
+import { bindCue, getSuggestedModalities, CUE_BINDINGS } from './reference-impl/cue-bindings';
+
+const binding = bindCue('subdivision_support');
+// {
+//   cue_key: 'add_subdivision_pulse',
+//   allowed_modalities: ['haptic', 'visual', 'audio'],
+//   tone: 'suggestive',
+//   renderer_hints: { enable_subdivision_pulse: true, pulse_level: 'light', ... }
+// }
+```
+
+### RendererPayloads (TypeScript)
+
+Pulse scheduling and payload builders for device/UI layer.
+
+```typescript
+import {
+  schedulePulse,
+  buildSubdivisionEnvelope,
+  buildBackbeatPulsePayload
+} from './reference-impl/renderer-payloads';
+
+// Build envelope for subdivision support
+const envelope = buildSubdivisionEnvelope({
+  bpm: 90,
+  meter: '4/4',
+  subdivision: '8n',
+  bars: 2,
+  grid_start_ms: 5000,
+  deliver_at_ms: 4500,
+  count_in_beats: 2,
+  modality: 'haptic',
+  take_id: 'take-123',
+});
+
+// Schedule pulse events from a payload
+const events = schedulePulse(envelope.payload, envelope.musical);
+// [{ time_ms, slot_index_in_bar, bar_index, is_accented, effective_gain }, ...]
 ```
 
 ## Related Documentation
