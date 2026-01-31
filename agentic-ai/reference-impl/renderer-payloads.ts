@@ -60,7 +60,7 @@ export interface PulsePayload {
   pulse_type: PulseType;
 
   timing: {
-    rate_hz: number;
+    rate_hz?: number; // Derived from slot_ms; set by scheduler for debugging
     phase: {
       anchor: "grid_start" | "deliver_at";
       anchor_time_ms: number;
@@ -206,6 +206,75 @@ export function slotsPerBar(subdivision: Subdivision, meter: Meter): number {
   return slotsPerBeat * beatsPerBar;
 }
 
+function beatsPerBar(meter: Meter): number {
+  if (meter === "3/4") return 3;
+  if (meter === "6/8") return 2;
+  return 4;
+}
+
+function slotsPerBeat(sub: Subdivision): number {
+  if (sub === "4n") return 1;
+  if (sub === "8n") return 2;
+  return 4;
+}
+
+// ============================================================================
+// Gain Helpers
+// ============================================================================
+
+function clamp01(x: number): number {
+  if (x < 0) return 0;
+  if (x > 1) return 1;
+  return x;
+}
+
+function levelScalar(level: IntensityLevel): number {
+  switch (level) {
+    case "light":
+      return 0.6;
+    case "medium":
+      return 0.85;
+    case "strong":
+      return 1.0;
+  }
+}
+
+// ============================================================================
+// Quantization Helpers
+// ============================================================================
+
+/**
+ * Quantize a start time to the nearest grid quantum relative to anchor_time_ms.
+ * - If within max_snap_ms of a boundary, snap to the nearest boundary.
+ * - Otherwise, snap forward to the next boundary after t.
+ */
+function quantizeStart(
+  t: number,
+  anchor_time_ms: number,
+  quantum_ms: number,
+  max_snap_ms: number
+): number {
+  if (quantum_ms <= 0) return t;
+
+  const rel = t - anchor_time_ms;
+  const k = rel / quantum_ms;
+
+  const kFloor = Math.floor(k);
+  const kCeil = Math.ceil(k);
+
+  const tFloor = anchor_time_ms + kFloor * quantum_ms;
+  const tCeil = anchor_time_ms + kCeil * quantum_ms;
+
+  // Nearest boundary
+  const nearest = Math.abs(t - tFloor) <= Math.abs(t - tCeil) ? tFloor : tCeil;
+
+  // Snap if close enough
+  if (Math.abs(t - nearest) <= max_snap_ms) return nearest;
+
+  // Otherwise snap forward (never backward if far)
+  return tCeil < t ? tCeil + quantum_ms : tCeil;
+}
+
 // ============================================================================
 // Pulse Event Generation
 // ============================================================================
@@ -228,7 +297,7 @@ export function schedulePulse(
 ): PulseEvent[] {
   const events: PulseEvent[] = [];
 
-  const { timing, intensity, pattern, output } = payload;
+  const { timing, intensity, pattern } = payload;
   const { start_ms, end_ms, quantize, phase } = timing;
 
   const slotMs = musical.slot_ms;
@@ -244,60 +313,57 @@ export function schedulePulse(
   // Build suppress lookup
   const suppressSet = new Set(pattern.suppress_slots_in_bar ?? []);
 
-  // Determine first pulse time (quantized)
-  const anchorMs = phase.anchor_time_ms + phase.phase_offset_ms;
-  let firstPulseMs: number;
+  // Determine anchor for phase alignment
+  const anchorTime =
+    phase.anchor === "grid_start"
+      ? musical.grid_start_ms
+      : phase.anchor_time_ms;
+  const anchor = anchorTime + (phase.phase_offset_ms ?? 0);
 
+  // Quantize start if enabled
+  let start = start_ms;
   if (quantize.enabled) {
-    // Find the first pulse boundary >= (start_ms - max_snap_ms)
-    const offsetFromAnchor = start_ms - anchorMs;
-    const slotsFromAnchor = Math.floor(offsetFromAnchor / slotMs);
-    let candidateMs = anchorMs + slotsFromAnchor * slotMs;
-
-    // If candidate is before start_ms - max_snap_ms, advance to next
-    if (candidateMs < start_ms - quantize.max_snap_ms) {
-      candidateMs += slotMs;
-    }
-
-    // Snap if within tolerance
-    if (Math.abs(candidateMs - start_ms) <= quantize.max_snap_ms) {
-      firstPulseMs = candidateMs;
-    } else {
-      // Start at next boundary
-      firstPulseMs = anchorMs + (slotsFromAnchor + 1) * slotMs;
-    }
-  } else {
-    firstPulseMs = start_ms;
+    start = quantizeStart(start_ms, anchor, quantize.quantum_ms, quantize.max_snap_ms);
   }
 
-  // Generate pulse events
-  let currentMs = firstPulseMs;
-  const gridStartMs = musical.grid_start_ms;
+  // Base gain includes level scalar
+  const base = clamp01(intensity.gain) * levelScalar(intensity.level);
 
-  while (currentMs < end_ms) {
-    // Compute position within musical grid
-    const offsetFromGridStart = currentMs - gridStartMs;
-    const barIndex = Math.floor(offsetFromGridStart / barMs);
-    const offsetInBar = ((offsetFromGridStart % barMs) + barMs) % barMs; // handle negative
-    const slotInBar = Math.round(offsetInBar / slotMs) % slotsInBar;
+  // Find first n such that anchor + n*slotMs >= start
+  const n0 = Math.ceil((start - anchor) / slotMs);
+  const n1 = Math.floor((end_ms - anchor) / slotMs);
 
-    // Check if suppressed
-    if (!suppressSet.has(slotInBar)) {
-      // Compute gain with accent
-      const accentGain = accentMap.get(slotInBar) ?? 0;
-      const effectiveGain = Math.min(1.0, intensity.gain * (1 + accentGain));
+  for (let n = n0; n <= n1; n++) {
+    const t = anchor + n * slotMs;
+    if (t < start || t > end_ms) continue;
 
-      events.push({
-        time_ms: currentMs,
-        slot_index_in_bar: slotInBar,
-        bar_index: barIndex,
-        is_accented: accentGain > 0,
-        effective_gain: effectiveGain,
-      });
-    }
+    // Slot/bar indices relative to grid_start for stable bar counting
+    const relToGrid = t - musical.grid_start_ms;
+    const barIndex = relToGrid >= 0 ? Math.floor(relToGrid / barMs) : 0;
 
-    currentMs += slotMs;
+    // Slot index within bar (based on subdivision slots)
+    const withinBarMs = ((relToGrid % barMs) + barMs) % barMs;
+    const slotInBar = Math.floor(withinBarMs / slotMs) % slotsInBar;
+
+    if (slotInBar < 0 || slotInBar >= slotsInBar) continue;
+    if (suppressSet.has(slotInBar)) continue;
+
+    // Compute gain with accent
+    const accentGain = accentMap.get(slotInBar) ?? 0;
+    const isAccented = accentGain > 0;
+    const effectiveGain = clamp01(base * (1 + accentGain));
+
+    events.push({
+      time_ms: Math.round(t),
+      slot_index_in_bar: slotInBar,
+      bar_index: barIndex,
+      is_accented: isAccented,
+      effective_gain: effectiveGain,
+    });
   }
+
+  // Attach rate_hz for debugging
+  payload.timing.rate_hz = 1000 / slotMs;
 
   return events;
 }
@@ -317,6 +383,10 @@ export interface SubdivisionPulseOptions {
   modality: Modality;
   level?: IntensityLevel;
   include_count_in?: boolean;
+  accents?: "beats" | "none";
+  accent_gains?: { downbeat?: number; other_beats?: number };
+  suppress_slots_in_bar?: number[];
+  quantize?: { enabled?: boolean; max_snap_ms?: number };
 }
 
 /**
@@ -336,6 +406,10 @@ export function buildSubdivisionPulsePayload(
     modality,
     level = "light",
     include_count_in = true,
+    accents: accentPolicy = "beats",
+    accent_gains,
+    suppress_slots_in_bar,
+    quantize,
   } = options;
 
   const beatMs = 60000 / bpm;
@@ -349,22 +423,26 @@ export function buildSubdivisionPulsePayload(
 
   const endMs = grid_start_ms + bars * barMs;
 
-  // Default accents for 4/4 with 8ths (beat positions)
-  const accents: PulseAccent[] =
-    meter === "4/4" && subdivision === "8n"
-      ? [
-          { slot_index_in_bar: 0, accent_gain: 0.35 }, // Beat 1
-          { slot_index_in_bar: 2, accent_gain: 0.2 },  // Beat 2
-          { slot_index_in_bar: 4, accent_gain: 0.2 },  // Beat 3
-          { slot_index_in_bar: 6, accent_gain: 0.2 },  // Beat 4
-        ]
-      : [{ slot_index_in_bar: 0, accent_gain: 0.35 }]; // Just downbeat
+  // Build accents based on policy
+  const spb = slotsPerBeat(subdivision);
+  const numBeats = beatsPerBar(meter);
+  const downbeatGain = accent_gains?.downbeat ?? 0.35;
+  const otherBeatGain = accent_gains?.other_beats ?? 0.2;
+
+  const accents: PulseAccent[] = [];
+  if (accentPolicy === "beats") {
+    for (let b = 0; b < numBeats; b++) {
+      accents.push({
+        slot_index_in_bar: b * spb,
+        accent_gain: b === 0 ? downbeatGain : otherBeatGain,
+      });
+    }
+  }
 
   const payload: PulsePayload = {
     type: "PulsePayload",
     pulse_type: "subdivision",
     timing: {
-      rate_hz: 1000 / slotMs,
       phase: {
         anchor: "grid_start",
         anchor_time_ms: grid_start_ms,
@@ -373,9 +451,9 @@ export function buildSubdivisionPulsePayload(
       start_ms: startMs,
       end_ms: endMs,
       quantize: {
-        enabled: true,
+        enabled: quantize?.enabled ?? true,
         quantum_ms: slotMs,
-        max_snap_ms: modality === "audio" ? 40 : 80,
+        max_snap_ms: quantize?.max_snap_ms ?? (modality === "audio" ? 40 : 80),
       },
     },
     intensity: {
@@ -386,6 +464,7 @@ export function buildSubdivisionPulsePayload(
     pattern: {
       subdivision,
       accents,
+      suppress_slots_in_bar,
       repeat_every_bar: true,
     },
     output: {
@@ -429,6 +508,7 @@ export function buildSubdivisionEnvelope(
   options: SubdivisionPulseOptions & {
     take_id: string;
     cue_key?: string;
+    decision_id?: string;
   }
 ): RendererEnvelope {
   const slotMs = computeSlotMs(options.bpm, options.subdivision);
@@ -451,32 +531,133 @@ export function buildSubdivisionEnvelope(
     debug: {
       cue_key: options.cue_key ?? "add_subdivision_pulse",
       take_id: options.take_id,
+      decision_id: options.decision_id,
     },
   };
 
   return envelope;
 }
 
+// ============================================================================
+// Backbeat Payload Builder
+// ============================================================================
+
+export interface BackbeatPulseOptions {
+  bpm: number;
+  meter: Meter;
+  subdivision?: Subdivision;
+  bars: number;
+  grid_start_ms: number;
+  start_ms: number;
+  end_ms: number;
+  modality: Modality;
+  level?: IntensityLevel;
+  quantize?: { enabled?: boolean; max_snap_ms?: number };
+}
+
 /**
- * Build a backbeat pulse payload (emphasize 2 and 4).
+ * Build a backbeat pulse payload (emphasize beats 2 & 4 in 4/4).
+ * For meters other than 4/4, emphasizes the "middle" beat positions.
+ * Non-backbeat slots are suppressed to produce only backbeat pulses.
  */
 export function buildBackbeatPulsePayload(
-  options: Omit<SubdivisionPulseOptions, "subdivision"> & { subdivision?: Subdivision }
+  options: BackbeatPulseOptions
 ): PulsePayload {
-  const subdivision = options.subdivision ?? "8n";
-  const basePayload = buildSubdivisionPulsePayload({ ...options, subdivision });
+  const {
+    bpm,
+    meter,
+    subdivision = "8n",
+    bars,
+    grid_start_ms,
+    start_ms,
+    end_ms,
+    modality,
+    level = "light",
+    quantize,
+  } = options;
 
-  // Override for backbeat emphasis
-  basePayload.pulse_type = "backbeat";
+  const slotMs = computeSlotMs(bpm, subdivision);
+  const spb = slotsPerBeat(subdivision);
+  const numBeats = beatsPerBar(meter);
+  const slotsInBar = slotsPerBar(subdivision, meter);
 
-  if (options.meter === "4/4" && subdivision === "8n") {
-    basePayload.pattern.accents = [
-      { slot_index_in_bar: 0, accent_gain: 0.15 }, // Beat 1 (lighter)
-      { slot_index_in_bar: 2, accent_gain: 0.40 }, // Beat 2 (strong)
-      { slot_index_in_bar: 4, accent_gain: 0.15 }, // Beat 3 (lighter)
-      { slot_index_in_bar: 6, accent_gain: 0.40 }, // Beat 4 (strong)
-    ];
+  // Backbeat definition:
+  // - 4/4: beats 2 and 4 => indices 1 and 3 (0-based), slot indices spb*1 and spb*3
+  // - 3/4: beat 2 => index 1
+  // - 6/8 (treated as 2 beats): beat 2 => index 1
+  const backbeatBeats: number[] =
+    meter === "4/4" ? [1, 3] :
+    meter === "3/4" ? [1] :
+    /* 6/8 */         [1];
+
+  const accents: PulseAccent[] = backbeatBeats.map((b) => ({
+    slot_index_in_bar: b * spb,
+    accent_gain: 0.45, // Stronger than subdivision accents
+  }));
+
+  // Suppress all non-backbeat slots to produce only backbeat pulses
+  const backbeatSlots = new Set(accents.map((a) => a.slot_index_in_bar));
+  const suppress: number[] = [];
+  for (let s = 0; s < slotsInBar; s++) {
+    if (!backbeatSlots.has(s)) suppress.push(s);
   }
 
-  return basePayload;
+  return {
+    type: "PulsePayload",
+    pulse_type: "backbeat",
+    timing: {
+      phase: {
+        anchor: "grid_start",
+        anchor_time_ms: grid_start_ms,
+        phase_offset_ms: 0,
+      },
+      start_ms,
+      end_ms,
+      quantize: {
+        enabled: quantize?.enabled ?? true,
+        quantum_ms: slotMs,
+        max_snap_ms: quantize?.max_snap_ms ?? 80,
+      },
+    },
+    intensity: {
+      level,
+      gain: level === "light" ? 0.7 : level === "medium" ? 0.85 : 1.0,
+      ramp_ms: 120,
+    },
+    pattern: {
+      subdivision,
+      accents,
+      suppress_slots_in_bar: suppress,
+      repeat_every_bar: true,
+    },
+    output: {
+      modality,
+      ...(modality === "haptic" && {
+        haptic: {
+          waveform: "thump",
+          pulse_width_ms: 25,
+          min_gap_ms: 40,
+          strength_curve: "ease_out",
+        },
+      }),
+      ...(modality === "visual" && {
+        visual: {
+          style: "blink",
+          pulse_width_ms: 80,
+          brightness: 0.5,
+          decay_ms: 160,
+          target: "beat_marker",
+        },
+      }),
+      ...(modality === "audio" && {
+        audio: {
+          sound: "click",
+          gain: 0.35,
+          duration_ms: 25,
+          accent_sound: "clack",
+          accent_gain_delta: 0.15,
+        },
+      }),
+    },
+  };
 }

@@ -83,9 +83,9 @@
         "pulse_type": { "$ref": "#/$defs/PulseType" },
         "timing": {
           "type": "object",
-          "required": ["rate_hz", "phase", "start_ms", "end_ms", "quantize"],
+          "required": ["phase", "start_ms", "end_ms", "quantize"],
           "properties": {
-            "rate_hz": { "type": "number", "minimum": 0 },
+            "rate_hz": { "type": "number", "minimum": 0, "description": "Derived from slot_ms; set by scheduler for debugging" },
             "phase": {
               "type": "object",
               "required": ["anchor", "anchor_time_ms", "phase_offset_ms"],
