@@ -40,6 +40,16 @@ import {
 } from "./guidance-engine";
 
 import {
+  assertValidGoldenInput,
+  assertValidRendererEnvelope,
+  validateGoldenInput,
+  validateGoldenOutput,
+  SchemaValidationError,
+  type ValidationResult,
+  type GoldenInputValidationResult,
+} from "./schema-validator";
+
+import {
   schedulePulse,
   buildSubdivisionPulsePayload,
   buildBackbeatPulsePayload,
@@ -262,17 +272,33 @@ const BACKBEAT_INTENTS: Set<CoachIntent> = new Set([
 // Main Runner
 // ============================================================================
 
+export interface GoldenRunOptions {
+  /** RNG for deterministic modality selection (default: () => 0.5) */
+  rng?: () => number;
+  /** Validate inputs against JSON schemas (default: true) */
+  validateInput?: boolean;
+  /** Validate output envelope against JSON schema (default: true) */
+  validateOutput?: boolean;
+}
+
 /**
  * Run the full golden path pipeline.
  *
  * @param input - Fixture-shaped input
- * @param rng - Optional RNG for deterministic modality selection (default: always 0.5)
+ * @param options - Optional configuration for RNG and validation
  * @returns Full pipeline result
+ * @throws SchemaValidationError if validation is enabled and inputs/outputs are invalid
  */
 export function runGoldenPath(
   input: GoldenRunInput,
-  rng: () => number = () => 0.5
+  options: GoldenRunOptions = {}
 ): GoldenRunResult {
+  const {
+    rng = () => 0.5,
+    validateInput = true,
+    validateOutput = true,
+  } = options;
+
   const {
     now_ms,
     musical,
@@ -283,6 +309,15 @@ export function runGoldenPath(
     policyConfig,
     deviceCapabilities,
   } = input;
+
+  // Stage 0: Schema validation (pre-flight)
+  if (validateInput) {
+    assertValidGoldenInput({
+      takeAnalysis,
+      segmenterFlags,
+      musical,
+    });
+  }
 
   // Stage 1: Resolve intent with diagnostics
   const resolution = resolveWithDiagnostics(
@@ -410,6 +445,11 @@ export function runGoldenPath(
     }
   }
 
+  // Stage 6: Output validation (post-flight)
+  if (validateOutput && rendererEnvelope !== null) {
+    assertValidRendererEnvelope(rendererEnvelope);
+  }
+
   return {
     intent,
     analysis_confidence,
@@ -452,3 +492,11 @@ export type {
   RendererEnvelope,
   PulseEvent,
 } from "./renderer-payloads";
+
+export {
+  SchemaValidationError,
+  validateGoldenInput,
+  validateGoldenOutput,
+  type ValidationResult,
+  type GoldenInputValidationResult,
+} from "./schema-validator";
