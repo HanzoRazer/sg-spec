@@ -49,8 +49,8 @@
     "exercise_id": "2bar_eighth_down",
     "take_id": "take_00003",
     "metrics": {
-      "hit_rate": 0.86,
-      "miss_rate": 0.14,
+      "hit_rate": 0.84,
+      "miss_rate": 0.16,
       "extra_rate": 0.06,
       "mean_offset_ms": -5,
       "median_offset_ms": -6,

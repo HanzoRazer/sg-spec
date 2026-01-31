@@ -335,7 +335,7 @@ export function schedulePulse(
 
   for (let n = n0; n <= n1; n++) {
     const t = anchor + n * slotMs;
-    if (t < start || t > end_ms) continue;
+    if (t < start || t >= end_ms) continue;
 
     // Slot/bar indices relative to grid_start for stable bar counting
     const relToGrid = t - musical.grid_start_ms;
