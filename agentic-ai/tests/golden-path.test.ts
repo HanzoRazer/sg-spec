@@ -1,80 +1,45 @@
 /**
  * Golden-Path Integration Tests
  *
- * Skeleton golden-path tests that:
- * - Load JSON fixtures from ./fixtures/*.json
- * - Run the same pipeline assertions consistently
+ * Fixture-driven tests using the canonical golden-runner.
  *
- * Pipeline: TakeAnalysis → CoachIntent → CueBinding → GuidanceEnvelope → RendererEnvelope → PulseEvent[]
+ * Pipeline: TakeAnalysis + flags + signals + policy + caps + musical
+ *         → { intent, cue_key, guidanceDecision, rendererEnvelope, pulseEvents }
+ *
+ * @see ../reference-impl/golden-runner.ts
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { describe, it, expect } from "vitest";
 
-// Reference implementations
+// Canonical runner (single source of truth)
 import {
-  resolveCoachIntent,
+  runGoldenPath,
+  type GoldenRunInput,
+  type GoldenRunResult,
+  type CoachIntent,
+  type Modality,
+  type PulseEvent,
+  type RendererEnvelope,
+  type MusicalContext,
   type TakeAnalysis,
   type SegmenterFlags,
   type FinalizeReason,
-  type CoachIntent,
-} from "../reference-impl/analysis-to-intent";
+} from "../reference-impl/golden-runner";
 
+// For isolated intent/binding tests
+import { resolveCoachIntent } from "../reference-impl/analysis-to-intent";
 import { bindCue } from "../reference-impl/cue-bindings";
-
-import {
-  GuidanceEngine,
-  type PolicyConfig,
-  type SessionSignals,
-  type InterventionDecision,
-} from "../reference-impl/guidance-engine";
-
-import {
-  schedulePulse,
-  buildSubdivisionPulsePayload,
-  buildSubdivisionEnvelope,
-  buildBackbeatPulsePayload,
-  type MusicalContext,
-  type Modality,
-  type PulsePayload,
-  type RendererEnvelope,
-} from "../reference-impl/renderer-payloads";
+import type { PulsePayload } from "../reference-impl/renderer-payloads";
 
 // ============================================================================
-// Types for fixtures
+// Fixture Types
 // ============================================================================
 
-type AnyRecord = Record<string, unknown>;
-
-interface DeviceCapabilities {
-  modalitiesAvailable: Modality[];
-}
-
-interface Fixture {
+interface Fixture extends GoldenRunInput {
   id: string;
-  now_ms: number;
-  musical: MusicalContext;
-  takeFinalized: AnyRecord;
-  segmenterFlags: SegmenterFlags;
-  finalize_reason: FinalizeReason;
-  takeAnalysis: TakeAnalysis;
-  userSignals: {
-    mode: string;
-    backoff: string;
-    timeSinceLastNoteOnMs: number;
-    phraseBoundaryDetected: boolean;
-    timeSincePhraseBoundaryMs: number;
-    ignoreStreak: number;
-    silencePreference: number;
-    userExplicitQuiet: boolean;
-  };
-  policyConfig: {
-    minPauseMs: number;
-    betweenPhraseOnly: boolean;
-    interruptBudgetPerMin: number;
-  };
-  deviceCapabilities: DeviceCapabilities;
+  takeFinalized: Record<string, unknown>;
   expected: {
     intent?: CoachIntent;
     cue_key?: string;
@@ -103,71 +68,7 @@ interface Fixture {
 }
 
 // ============================================================================
-// Default Policy Config (for testing)
-// ============================================================================
-
-function createTestPolicyConfig(deviceCaps: DeviceCapabilities): PolicyConfig {
-  const modalityAvailability: Record<Modality, boolean> = {
-    haptic: deviceCaps.modalitiesAvailable.includes("haptic"),
-    visual: deviceCaps.modalitiesAvailable.includes("visual"),
-    audio: deviceCaps.modalitiesAvailable.includes("audio"),
-    text: deviceCaps.modalitiesAvailable.includes("text"),
-  };
-
-  const basePolicy = {
-    interruptBudgetPerMin: 1.5,
-    minPauseMs: 900,
-    betweenPhraseOnly: true,
-    realTimeEnabled: true,
-    granularity: "micro" as const,
-    maxCuesPerIntervention: 1,
-    modalityWeights: { haptic: 0.4, visual: 0.3, audio: 0.2, text: 0.1 },
-    tone: "suggestive" as const,
-    assist: {
-      tempoStabilization: true,
-      phraseBoundaryMarking: true,
-      callResponse: false,
-      postSessionRecap: true,
-    },
-  };
-
-  return {
-    version: "1.0.0",
-    matrix: {
-      NEUTRAL: { L0: basePolicy, L1: basePolicy, L2: basePolicy, L3: { ...basePolicy, realTimeEnabled: false }, L4: { ...basePolicy, realTimeEnabled: false, granularity: "none" } },
-      PRACTICE: { L0: basePolicy, L1: basePolicy, L2: basePolicy, L3: { ...basePolicy, realTimeEnabled: false }, L4: { ...basePolicy, realTimeEnabled: false, granularity: "none" } },
-      PERFORMANCE: { L0: { ...basePolicy, interruptBudgetPerMin: 0.5 }, L1: { ...basePolicy, interruptBudgetPerMin: 0.3 }, L2: { ...basePolicy, interruptBudgetPerMin: 0.2 }, L3: { ...basePolicy, realTimeEnabled: false }, L4: { ...basePolicy, realTimeEnabled: false, granularity: "none" } },
-      EXPLORATION: { L0: basePolicy, L1: basePolicy, L2: basePolicy, L3: { ...basePolicy, realTimeEnabled: false }, L4: { ...basePolicy, realTimeEnabled: false, granularity: "none" } },
-    },
-    runtime: {
-      tokenBucket: {
-        maxTokens: 3,
-        stochasticRounding: false,
-        cooldownAfterInterventionMs: 500,
-      },
-      safeWindow: {
-        phraseBoundaryRequiredAtOrAboveBackoff: "L2",
-        minPauseMsByBackoff: { L0: 800, L1: 900, L2: 1000, L3: 1200, L4: 2000 },
-        phraseBoundaryDebounceMs: 300,
-        silenceGateExtraPauseMs: 500,
-      },
-      globalRules: {
-        performanceNeverInstructive: true,
-        performanceNoMicroGranularity: true,
-        backoffAtOrAboveL2ForcesBetweenPhraseOnly: true,
-        ignoreStreakClamp: {
-          ignoreStreakThreshold: 3,
-          maxInterruptBudgetPerMin: 0.5,
-          extraPauseMs: 1000,
-        },
-      },
-      modalityAvailability,
-    },
-  };
-}
-
-// ============================================================================
-// Fixture loading
+// Fixture Loading
 // ============================================================================
 
 const FIXTURES_DIR = path.join(__dirname, "fixtures");
@@ -189,10 +90,11 @@ function loadFixture(filePath: string): Fixture {
 }
 
 // ============================================================================
-// Assertion helpers
+// Assertion Helpers
 // ============================================================================
 
-function assertShouldInitiate(decision: InterventionDecision, expected: Fixture["expected"]) {
+function assertShouldInitiate(result: GoldenRunResult, expected: Fixture["expected"]) {
+  const decision = result.guidanceDecision;
   if (typeof expected.shouldInitiate === "boolean") {
     expect(decision.shouldInitiate).toBe(expected.shouldInitiate);
     return;
@@ -209,7 +111,9 @@ function extractPulseType(envelope: RendererEnvelope | null): string | null {
   const payload = envelope.payload;
   if (!payload) return null;
 
-  if (payload.type === "PulsePayload") return (payload as PulsePayload).pulse_type ?? null;
+  if (payload.type === "PulsePayload") {
+    return (payload as PulsePayload).pulse_type ?? null;
+  }
 
   if (payload.type === "CompositePayload" && "parts" in payload) {
     for (const p of (payload as { parts: Array<{ type: string; pulse_type?: string }> }).parts) {
@@ -219,22 +123,14 @@ function extractPulseType(envelope: RendererEnvelope | null): string | null {
   return null;
 }
 
-function assertMustNotSchedulePulseTypes(envelope: RendererEnvelope | null, expected: Fixture["expected"]) {
+function assertMustNotSchedulePulseTypes(result: GoldenRunResult, expected: Fixture["expected"]) {
   const deny = expected.must_not_schedule_pulse_types;
   if (!deny || !deny.length) return;
 
-  const pulseType = extractPulseType(envelope);
+  const pulseType = extractPulseType(result.rendererEnvelope);
   if (pulseType === null) return; // no pulse at all is fine
 
   expect(deny).not.toContain(pulseType);
-}
-
-interface PulseEvent {
-  time_ms: number;
-  slot_index_in_bar: number;
-  bar_index: number;
-  is_accented: boolean;
-  effective_gain: number;
 }
 
 function assertPulseEvents(
@@ -277,131 +173,7 @@ function assertPulseEvents(
 }
 
 // ============================================================================
-// Pipeline runner
-// ============================================================================
-
-interface PipelineResult {
-  intent: CoachIntent;
-  binding: ReturnType<typeof bindCue>;
-  guidanceDecision: InterventionDecision;
-  rendererEnvelope: RendererEnvelope | null;
-  pulseEvents: PulseEvent[];
-}
-
-function runPipeline(fx: Fixture): PipelineResult {
-  // 1) Analysis → Intent
-  const intent = resolveCoachIntent(
-    fx.takeAnalysis,
-    fx.finalize_reason,
-    fx.segmenterFlags
-  );
-
-  // 2) Intent → Cue binding
-  const binding = bindCue(intent);
-
-  // 3) Create guidance engine and decide
-  const policyConfig = createTestPolicyConfig(fx.deviceCapabilities);
-  const engine = new GuidanceEngine(policyConfig, () => 0.5); // Deterministic RNG
-  engine.startSession(fx.now_ms - 10000); // Started 10s ago
-
-  const sessionSignals: SessionSignals = {
-    nowMs: fx.now_ms,
-    timeSinceLastNoteOnMs: fx.userSignals.timeSinceLastNoteOnMs,
-    phraseBoundaryDetected: fx.userSignals.phraseBoundaryDetected,
-    timeSincePhraseBoundaryMs: fx.userSignals.timeSincePhraseBoundaryMs,
-    ignoreStreak: fx.userSignals.ignoreStreak,
-    silencePreference: fx.userSignals.silencePreference,
-    userExplicitQuiet: fx.userSignals.userExplicitQuiet,
-  };
-
-  const guidanceDecision = engine.decide(
-    fx.userSignals.mode as "NEUTRAL" | "PRACTICE" | "PERFORMANCE" | "EXPLORATION",
-    fx.userSignals.backoff as "L0" | "L1" | "L2" | "L3" | "L4",
-    sessionSignals
-  );
-
-  // 4) Build renderer envelope (only if initiated)
-  let rendererEnvelope: RendererEnvelope | null = null;
-  let pulseEvents: PulseEvent[] = [];
-
-  if (guidanceDecision.shouldInitiate) {
-    const selectedModality = guidanceDecision.modality ?? "haptic";
-
-    if (intent === "subdivision_support") {
-      rendererEnvelope = buildSubdivisionEnvelope({
-        bpm: fx.musical.bpm,
-        meter: fx.musical.meter,
-        subdivision: fx.musical.subdivision,
-        bars: fx.musical.bars,
-        grid_start_ms: fx.musical.grid_start_ms,
-        deliver_at_ms: fx.musical.grid_start_ms,
-        count_in_beats: 2,
-        modality: selectedModality,
-        include_count_in: false,
-        take_id: fx.takeAnalysis.take_id,
-        cue_key: binding.cue_key,
-      });
-    } else if (intent === "backbeat_anchor") {
-      const payload = buildBackbeatPulsePayload({
-        bpm: fx.musical.bpm,
-        meter: fx.musical.meter,
-        subdivision: fx.musical.subdivision,
-        bars: fx.musical.bars,
-        grid_start_ms: fx.musical.grid_start_ms,
-        start_ms: fx.musical.grid_start_ms,
-        end_ms: fx.musical.grid_start_ms + 6000, // 2 bars
-        modality: selectedModality,
-      });
-
-      rendererEnvelope = {
-        type: "RendererEnvelope",
-        t_ms: fx.now_ms,
-        selected_modality: selectedModality,
-        deliver_at_ms: fx.now_ms,
-        delivery_window_ms: 1500,
-        musical: fx.musical,
-        payload,
-        debug: {
-          cue_key: binding.cue_key,
-          take_id: fx.takeAnalysis.take_id,
-        },
-      };
-    } else {
-      // Non-pulse payload (text prompt)
-      rendererEnvelope = {
-        type: "RendererEnvelope",
-        t_ms: fx.now_ms,
-        selected_modality: selectedModality,
-        deliver_at_ms: fx.now_ms,
-        delivery_window_ms: 1500,
-        musical: fx.musical,
-        payload: {
-          type: "TextPromptPayload",
-          cue_key: binding.cue_key,
-          text: binding.verification_template,
-          display_ms: 3000,
-          position: "center",
-          style: "toast",
-        },
-        debug: {
-          cue_key: binding.cue_key,
-          take_id: fx.takeAnalysis.take_id,
-        },
-      };
-    }
-
-    // 5) Schedule pulse events if applicable
-    const pulseType = extractPulseType(rendererEnvelope);
-    if (pulseType && rendererEnvelope.payload.type === "PulsePayload") {
-      pulseEvents = schedulePulse(rendererEnvelope.payload as PulsePayload, fx.musical);
-    }
-  }
-
-  return { intent, binding, guidanceDecision, rendererEnvelope, pulseEvents };
-}
-
-// ============================================================================
-// Golden-path test suite
+// Golden-Path Test Suite (fixture-driven, uses canonical runner)
 // ============================================================================
 
 describe("agentic-ai golden path fixtures", () => {
@@ -411,27 +183,28 @@ describe("agentic-ai golden path fixtures", () => {
     const fx = loadFixture(file);
 
     it(`${path.basename(file)} (${fx.id})`, () => {
-      const { intent, binding, guidanceDecision, rendererEnvelope, pulseEvents } = runPipeline(fx);
+      // Run canonical pipeline
+      const result = runGoldenPath(fx);
 
       // 1) Intent + cue_key
       if (fx.expected.intent) {
-        expect(intent).toBe(fx.expected.intent);
+        expect(result.intent).toBe(fx.expected.intent);
       }
 
       if (fx.expected.cue_key) {
-        expect(binding.cue_key).toBe(fx.expected.cue_key);
+        expect(result.cue_key).toBe(fx.expected.cue_key);
       }
 
       // 2) Policy decision
-      assertShouldInitiate(guidanceDecision, fx.expected);
+      assertShouldInitiate(result, fx.expected);
 
       // 3) If initiated, check renderer envelope and modality
-      if (guidanceDecision.shouldInitiate) {
-        expect(rendererEnvelope).not.toBeNull();
-        expect(rendererEnvelope!.type).toBe("RendererEnvelope");
+      if (result.guidanceDecision.shouldInitiate) {
+        expect(result.rendererEnvelope).not.toBeNull();
+        expect(result.rendererEnvelope!.type).toBe("RendererEnvelope");
 
         if (fx.expected.selected_modality) {
-          expect(guidanceDecision.modality).toBe(fx.expected.selected_modality);
+          expect(result.guidanceDecision.modality).toBe(fx.expected.selected_modality);
         }
 
         if (fx.expected.allowed_modalities_contains) {
@@ -441,17 +214,17 @@ describe("agentic-ai golden path fixtures", () => {
         }
 
         // 4) Must-not pulse types checks
-        assertMustNotSchedulePulseTypes(rendererEnvelope, fx.expected);
+        assertMustNotSchedulePulseTypes(result, fx.expected);
 
         // 5) Pulse assertions
         if (fx.expected.pulse) {
-          expect(Array.isArray(pulseEvents)).toBe(true);
-          assertPulseEvents(pulseEvents, fx.expected.pulse, rendererEnvelope!);
+          expect(Array.isArray(result.pulseEvents)).toBe(true);
+          assertPulseEvents(result.pulseEvents, fx.expected.pulse, result.rendererEnvelope!);
         }
       } else {
-        // If not initiated, renderer envelope may be null
+        // If not initiated, renderer envelope should be null
         if (fx.expected.must_not_schedule_pulse_types) {
-          expect(rendererEnvelope).toBeNull();
+          expect(result.rendererEnvelope).toBeNull();
         }
       }
     });
@@ -459,7 +232,7 @@ describe("agentic-ai golden path fixtures", () => {
 });
 
 // ============================================================================
-// Individual test blocks for clarity
+// Isolated Intent Resolution Tests
 // ============================================================================
 
 describe("Golden-Path: Intent Resolution (isolated)", () => {
@@ -499,6 +272,10 @@ describe("Golden-Path: Intent Resolution (isolated)", () => {
     expect(intent).toBe("finish_two_bars");
   });
 });
+
+// ============================================================================
+// Isolated Cue Binding Tests
+// ============================================================================
 
 describe("Golden-Path: Cue Binding (isolated)", () => {
   it("raise_challenge → nice_lock_in_bump_tempo", () => {
