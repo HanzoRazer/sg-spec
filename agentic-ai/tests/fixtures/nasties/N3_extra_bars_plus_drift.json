@@ -1,0 +1,117 @@
+{
+  "id": "N3_extra_bars_plus_drift",
+  "description": "Extra bars + severe drift: exercise length correction outranks drift coaching",
+  "now_ms": 1012500,
+  "musical": {
+    "bpm": 80,
+    "meter": "4/4",
+    "bars": 2,
+    "subdivision": "8n",
+    "grid_start_ms": 1001500,
+    "slot_ms": 375
+  },
+  "takeFinalized": {
+    "type": "TakeFinalized",
+    "t_ms": 1012000,
+    "exercise_id": "2bar_eighth_down",
+    "take_id": "take_n3_001",
+    "timing": {
+      "take_start_ms": 1000000,
+      "count_in_start_ms": 1000000,
+      "play_start_ms": 1001500,
+      "expected_grid_start_ms": 1001500,
+      "expected_grid_end_ms": 1007500,
+      "finalize_reason": "USER_STOP"
+    },
+    "context": {
+      "meter": "4/4",
+      "bars": 2,
+      "bpm_target": 80,
+      "bpm_tolerance": 6,
+      "subdivision": "8n",
+      "count_in_beats": 2,
+      "pattern_id": "2bar_eighth_down"
+    },
+    "events": []
+  },
+  "segmenterFlags": {
+    "late_start": false,
+    "missed_count_in": false,
+    "extra_events_after_end": true,
+    "extra_bars": true,
+    "partial_take": false,
+    "tempo_mismatch": false,
+    "restart_detected": false,
+    "low_confidence_events": 0
+  },
+  "finalize_reason": "USER_STOP",
+  "takeAnalysis": {
+    "type": "TakeAnalysis",
+    "exercise_id": "2bar_eighth_down",
+    "take_id": "take_n3_001",
+    "metrics": {
+      "hit_rate": 0.81,
+      "miss_rate": 0.19,
+      "extra_rate": 0.50,
+      "mean_offset_ms": -55,
+      "median_offset_ms": -50,
+      "std_offset_ms": 42,
+      "p90_abs_offset_ms": 85,
+      "drift_ms_per_bar": -60,
+      "stability": 0.48
+    },
+    "grid": {
+      "grid_start_ms": 1001500,
+      "slot_ms": 375,
+      "total_slots": 16,
+      "expected_slots": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    },
+    "alignment": {
+      "matched": [
+        { "slot": 0, "seq": 301, "offset_ms": -10 },
+        { "slot": 1, "seq": 302, "offset_ms": -25 },
+        { "slot": 2, "seq": 303, "offset_ms": -40 },
+        { "slot": 3, "seq": 304, "offset_ms": -55 },
+        { "slot": 4, "seq": 305, "offset_ms": -70 },
+        { "slot": 5, "seq": 306, "offset_ms": -80 },
+        { "slot": 6, "seq": 307, "offset_ms": -90 },
+        { "slot": 7, "seq": 308, "offset_ms": -100 },
+        { "slot": 8, "seq": 309, "offset_ms": -105 },
+        { "slot": 9, "seq": 310, "offset_ms": -110 },
+        { "slot": 10, "seq": 311, "offset_ms": -115 },
+        { "slot": 11, "seq": 312, "offset_ms": -118 },
+        { "slot": 12, "seq": 313, "offset_ms": -120 }
+      ],
+      "missed_slots": [13, 14, 15],
+      "extra_seqs": [314, 315, 316, 317, 318, 319, 320, 321]
+    },
+    "quality": {
+      "event_confidence_mean": 0.82
+    }
+  },
+  "userSignals": {
+    "mode": "PRACTICE",
+    "backoff": "L1",
+    "timeSinceLastNoteOnMs": 1500,
+    "phraseBoundaryDetected": true,
+    "timeSincePhraseBoundaryMs": 1300,
+    "ignoreStreak": 0,
+    "silencePreference": 0.2,
+    "userExplicitQuiet": false
+  },
+  "policyConfig": {
+    "minPauseMs": 900,
+    "betweenPhraseOnly": true,
+    "interruptBudgetPerMin": 1.5
+  },
+  "deviceCapabilities": {
+    "modalitiesAvailable": ["haptic", "visual"]
+  },
+  "expected": {
+    "intent": "clarify_exercise_length",
+    "cue_key": "stop_after_two_bars",
+    "shouldInitiate": true,
+    "must_not_schedule_pulse_types": ["backbeat"],
+    "priority_reason": "length_correction_overrides_drift"
+  }
+}

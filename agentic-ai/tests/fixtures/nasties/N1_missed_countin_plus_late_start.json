@@ -1,0 +1,108 @@
+{
+  "id": "N1_missed_countin_plus_late_start",
+  "description": "Missed count-in + late start: count-in takes priority over start timing",
+  "now_ms": 1009500,
+  "musical": {
+    "bpm": 90,
+    "meter": "4/4",
+    "bars": 2,
+    "subdivision": "8n",
+    "grid_start_ms": 1002000,
+    "slot_ms": 333
+  },
+  "takeFinalized": {
+    "type": "TakeFinalized",
+    "t_ms": 1008300,
+    "exercise_id": "2bar_eighth_down",
+    "take_id": "take_n1_001",
+    "timing": {
+      "take_start_ms": 1000000,
+      "count_in_start_ms": 1000000,
+      "play_start_ms": 1002400,
+      "expected_grid_start_ms": 1002000,
+      "expected_grid_end_ms": 1007333,
+      "finalize_reason": "GRID_COMPLETE"
+    },
+    "context": {
+      "meter": "4/4",
+      "bars": 2,
+      "bpm_target": 90,
+      "bpm_tolerance": 6,
+      "subdivision": "8n",
+      "count_in_beats": 2,
+      "pattern_id": "2bar_eighth_down"
+    },
+    "events": []
+  },
+  "segmenterFlags": {
+    "late_start": true,
+    "missed_count_in": true,
+    "extra_events_after_end": false,
+    "extra_bars": false,
+    "partial_take": false,
+    "tempo_mismatch": false,
+    "restart_detected": false,
+    "low_confidence_events": 0
+  },
+  "finalize_reason": "GRID_COMPLETE",
+  "takeAnalysis": {
+    "type": "TakeAnalysis",
+    "exercise_id": "2bar_eighth_down",
+    "take_id": "take_n1_001",
+    "metrics": {
+      "hit_rate": 0.88,
+      "miss_rate": 0.12,
+      "extra_rate": 0.00,
+      "mean_offset_ms": 12,
+      "median_offset_ms": 10,
+      "std_offset_ms": 18,
+      "p90_abs_offset_ms": 38,
+      "drift_ms_per_bar": 5,
+      "stability": 0.82
+    },
+    "grid": {
+      "grid_start_ms": 1002000,
+      "slot_ms": 333,
+      "total_slots": 16,
+      "expected_slots": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    },
+    "alignment": {
+      "matched": [
+        { "slot": 0, "seq": 101, "offset_ms": 400 },
+        { "slot": 1, "seq": 102, "offset_ms": 380 },
+        { "slot": 2, "seq": 103, "offset_ms": 350 },
+        { "slot": 3, "seq": 104, "offset_ms": 320 }
+      ],
+      "missed_slots": [14, 15],
+      "extra_seqs": []
+    },
+    "quality": {
+      "event_confidence_mean": 0.84
+    }
+  },
+  "userSignals": {
+    "mode": "PRACTICE",
+    "backoff": "L1",
+    "timeSinceLastNoteOnMs": 1400,
+    "phraseBoundaryDetected": true,
+    "timeSincePhraseBoundaryMs": 1200,
+    "ignoreStreak": 0,
+    "silencePreference": 0.2,
+    "userExplicitQuiet": false
+  },
+  "policyConfig": {
+    "minPauseMs": 900,
+    "betweenPhraseOnly": true,
+    "interruptBudgetPerMin": 1.5
+  },
+  "deviceCapabilities": {
+    "modalitiesAvailable": ["haptic", "visual", "audio"]
+  },
+  "expected": {
+    "intent": "wait_for_count_in",
+    "cue_key": "wait_for_count_in_then_enter",
+    "shouldInitiate": true,
+    "must_not_schedule_pulse_types": ["subdivision", "backbeat"],
+    "priority_reason": "count_in_overrides_late_start"
+  }
+}

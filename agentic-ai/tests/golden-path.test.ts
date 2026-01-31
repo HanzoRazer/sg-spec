@@ -39,7 +39,15 @@ import type { PulsePayload } from "../reference-impl/renderer-payloads";
 
 interface Fixture extends GoldenRunInput {
   id: string;
+  description?: string;
   takeFinalized: Record<string, unknown>;
+  pulseConfig?: {
+    deliver_at_ms?: number;
+    max_snap_ms?: number;
+    grid_boundary_ms?: number;
+    next_boundary_ms?: number;
+    comment?: string;
+  };
   expected: {
     intent?: CoachIntent;
     cue_key?: string;
@@ -47,8 +55,19 @@ interface Fixture extends GoldenRunInput {
     shouldInitiate_one_of?: boolean[];
     selected_modality?: Modality;
     allowed_modalities_contains?: Modality[];
+    must_not_use_modalities?: Modality[];
     bpm_next_delta?: number;
     must_not_schedule_pulse_types?: string[];
+    may_schedule_pulse_types?: string[];
+    suppressed?: boolean;
+    suppression_reason?: string;
+    priority_reason?: string;
+    tie_break_rule?: string;
+    confidence_gate?: string;
+    first_pulse_time_ms?: number;
+    snap_direction?: "forward" | "backward";
+    snap_behavior?: string;
+    comment?: string;
     pulse?: {
       pulse_type: string;
       grid_start_ms?: number;
@@ -72,16 +91,30 @@ interface Fixture extends GoldenRunInput {
 // ============================================================================
 
 const FIXTURES_DIR = path.join(__dirname, "fixtures");
+const NASTIES_DIR = path.join(__dirname, "fixtures", "nasties");
 
 function listFixtureFiles(): string[] {
-  const files = fs
+  // Golden path fixtures (G*.json)
+  const goldenFiles = fs
     .readdirSync(FIXTURES_DIR)
     .filter((f) => f.endsWith(".json") && f.startsWith("G"))
-    .sort();
+    .sort()
+    .map((f) => path.join(FIXTURES_DIR, f));
+
+  // Nasties fixtures (N*.json)
+  const nastyFiles = fs.existsSync(NASTIES_DIR)
+    ? fs
+        .readdirSync(NASTIES_DIR)
+        .filter((f) => f.endsWith(".json") && f.startsWith("N"))
+        .sort()
+        .map((f) => path.join(NASTIES_DIR, f))
+    : [];
+
+  const files = [...goldenFiles, ...nastyFiles];
   if (files.length === 0) {
-    throw new Error(`No G*.json fixtures found in ${FIXTURES_DIR}`);
+    throw new Error(`No fixtures found in ${FIXTURES_DIR}`);
   }
-  return files.map((f) => path.join(FIXTURES_DIR, f));
+  return files;
 }
 
 function loadFixture(filePath: string): Fixture {
@@ -291,5 +324,61 @@ describe("Golden-Path: Cue Binding (isolated)", () => {
   it("backbeat_anchor → emphasize_2_and_4", () => {
     const binding = bindCue("backbeat_anchor");
     expect(binding.cue_key).toBe("emphasize_2_and_4");
+  });
+});
+
+// ============================================================================
+// Nasties: Priority Resolution Tests (isolated)
+// ============================================================================
+
+describe("Nasties: Intent Priority Resolution (isolated)", () => {
+  it("N1: missed_count_in + late_start → wait_for_count_in (count-in priority)", () => {
+    const fx = loadFixture(path.join(NASTIES_DIR, "N1_missed_countin_plus_late_start.json"));
+    const intent = resolveCoachIntent(fx.takeAnalysis, fx.finalize_reason, fx.segmenterFlags);
+    expect(intent).toBe("wait_for_count_in");
+  });
+
+  it("N2: partial_take + tempo_mismatch → finish_two_bars (completion priority)", () => {
+    const fx = loadFixture(path.join(NASTIES_DIR, "N2_partial_take_plus_tempo_mismatch.json"));
+    const intent = resolveCoachIntent(fx.takeAnalysis, fx.finalize_reason, fx.segmenterFlags);
+    expect(intent).toBe("finish_two_bars");
+  });
+
+  it("N3: extra_bars + drift → clarify_exercise_length (length correction priority)", () => {
+    const fx = loadFixture(path.join(NASTIES_DIR, "N3_extra_bars_plus_drift.json"));
+    const intent = resolveCoachIntent(fx.takeAnalysis, fx.finalize_reason, fx.segmenterFlags);
+    expect(intent).toBe("clarify_exercise_length");
+  });
+
+  it("N4: low_confidence_storm → repeat_once (unreliable detection)", () => {
+    const fx = loadFixture(path.join(NASTIES_DIR, "N4_low_confidence_storm.json"));
+    const intent = resolveCoachIntent(fx.takeAnalysis, fx.finalize_reason, fx.segmenterFlags);
+    expect(intent).toBe("repeat_once");
+  });
+
+  it("N5: metric_contradiction (p90 good, stability bad) → raise_challenge (metrics pass despite bad stability)", () => {
+    // Note: Current router does not use stability for intent selection.
+    // Metrics pass (hit_rate=0.88, p90=35, extra=0.06) so it gets raise_challenge.
+    // Future enhancement: consider stability check before raise_challenge.
+    const fx = loadFixture(path.join(NASTIES_DIR, "N5_metric_contradiction.json"));
+    const intent = resolveCoachIntent(fx.takeAnalysis, fx.finalize_reason, fx.segmenterFlags);
+    expect(intent).toBe("raise_challenge");
+  });
+});
+
+// ============================================================================
+// Nasties: Modality Constraints Tests
+// ============================================================================
+
+describe("Nasties: Modality Constraints", () => {
+  it("N4: low confidence with elevated silence preference avoids audio", () => {
+    const fx = loadFixture(path.join(NASTIES_DIR, "N4_low_confidence_storm.json"));
+    const result = runGoldenPath(fx);
+
+    if (result.guidanceDecision.shouldInitiate && result.guidanceDecision.modality) {
+      // With silencePreference=0.4 and L2 backoff, audio should be avoided
+      expect(fx.expected.must_not_use_modalities).toContain("audio");
+      expect(result.guidanceDecision.modality).not.toBe("audio");
+    }
   });
 });

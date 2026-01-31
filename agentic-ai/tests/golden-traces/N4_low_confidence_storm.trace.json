@@ -1,0 +1,22 @@
+{
+  "intent": "repeat_once",
+  "cue_key": "one_more_take_same_tempo",
+  "analysis_confidence": 0.535,
+  "gradeability": "LOW",
+  "suppressed": true,
+  "guidance": {
+    "shouldInitiate": true,
+    "reason": "ok",
+    "mode": "PRACTICE",
+    "backoff": "L2",
+    "modality": "haptic"
+  },
+  "renderer": {
+    "type": "RendererEnvelope",
+    "payload_type": "TextPromptPayload",
+    "pulse_type": null,
+    "deliver_at_ms": 1009200,
+    "selected_modality": "haptic"
+  },
+  "pulses": null
+}

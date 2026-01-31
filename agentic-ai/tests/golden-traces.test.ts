@@ -34,6 +34,7 @@ import {
 // ============================================================================
 
 const FIXTURES_DIR = path.join(__dirname, "fixtures");
+const NASTIES_DIR = path.join(__dirname, "fixtures", "nasties");
 const TRACES_DIR = path.join(__dirname, "golden-traces");
 const UPDATE_TRACES = process.env.UPDATE_TRACES === "1";
 
@@ -47,11 +48,23 @@ interface Fixture extends GoldenRunInput {
 }
 
 function listFixtureFiles(): string[] {
-  return fs
+  // Golden path fixtures (G*.json)
+  const goldenFiles = fs
     .readdirSync(FIXTURES_DIR)
     .filter((f) => f.endsWith(".json") && f.startsWith("G"))
     .sort()
     .map((f) => path.join(FIXTURES_DIR, f));
+
+  // Nasties fixtures (N*.json)
+  const nastyFiles = fs.existsSync(NASTIES_DIR)
+    ? fs
+        .readdirSync(NASTIES_DIR)
+        .filter((f) => f.endsWith(".json") && f.startsWith("N"))
+        .sort()
+        .map((f) => path.join(NASTIES_DIR, f))
+    : [];
+
+  return [...goldenFiles, ...nastyFiles];
 }
 
 function loadFixture(filePath: string): Fixture {
