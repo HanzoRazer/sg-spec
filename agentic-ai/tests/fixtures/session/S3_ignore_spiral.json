@@ -1,0 +1,107 @@
+{
+  "id": "S3_ignore_spiral",
+  "description": "As ignore streak rises, interventions should stop (backoff suppression)",
+  "startMs": 2200000,
+  "rngSequence": [0.12, 0.34, 0.56, 0.78],
+  "steps": [
+    {
+      "label": "coachable_streak_0",
+      "in": {
+        "at_ms": 2200000,
+        "mode": "PRACTICE",
+        "backoff": "L1",
+        "signals": {
+          "timeSinceLastNoteOnMs": 1400,
+          "phraseBoundaryDetected": true,
+          "timeSincePhraseBoundaryMs": 1200,
+          "ignoreStreak": 0,
+          "silencePreference": 0.2,
+          "userExplicitQuiet": false
+        }
+      },
+      "expect": {
+        "shouldInitiate": true
+      }
+    },
+    {
+      "label": "coachable_streak_1",
+      "in": {
+        "at_ms": 2240000,
+        "mode": "PRACTICE",
+        "backoff": "L1",
+        "signals": {
+          "timeSinceLastNoteOnMs": 1400,
+          "phraseBoundaryDetected": true,
+          "timeSincePhraseBoundaryMs": 1200,
+          "ignoreStreak": 1,
+          "silencePreference": 0.2,
+          "userExplicitQuiet": false
+        }
+      },
+      "expect": {
+        "shouldInitiate": true
+      }
+    },
+    {
+      "label": "coachable_streak_2",
+      "in": {
+        "at_ms": 2280000,
+        "mode": "PRACTICE",
+        "backoff": "L1",
+        "signals": {
+          "timeSinceLastNoteOnMs": 1400,
+          "phraseBoundaryDetected": true,
+          "timeSincePhraseBoundaryMs": 1200,
+          "ignoreStreak": 2,
+          "silencePreference": 0.2,
+          "userExplicitQuiet": false
+        }
+      },
+      "expect": {
+        "shouldInitiate": true
+      }
+    },
+    {
+      "label": "suppressed_streak_3",
+      "in": {
+        "at_ms": 2320000,
+        "mode": "PRACTICE",
+        "backoff": "L1",
+        "signals": {
+          "timeSinceLastNoteOnMs": 1600,
+          "phraseBoundaryDetected": true,
+          "timeSincePhraseBoundaryMs": 1400,
+          "ignoreStreak": 3,
+          "silencePreference": 0.2,
+          "userExplicitQuiet": false
+        }
+      },
+      "expect": {
+        "shouldInitiate": false
+      }
+    },
+    {
+      "label": "suppressed_streak_4",
+      "in": {
+        "at_ms": 2360000,
+        "mode": "PRACTICE",
+        "backoff": "L1",
+        "signals": {
+          "timeSinceLastNoteOnMs": 1600,
+          "phraseBoundaryDetected": true,
+          "timeSincePhraseBoundaryMs": 1400,
+          "ignoreStreak": 4,
+          "silencePreference": 0.2,
+          "userExplicitQuiet": false
+        }
+      },
+      "expect": {
+        "shouldInitiate": false
+      }
+    }
+  ],
+  "aggregate": {
+    "ignoreStreakThreshold": 3,
+    "comment": "After ignoreStreak >= 3, shouldInitiate must be false due to budget clamp"
+  }
+}
