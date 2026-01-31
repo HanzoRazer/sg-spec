@@ -23,12 +23,16 @@ agentic-ai/
 │   ├── take-events.schema.json         # Segmenter I/O events
 │   ├── coach-decision.schema.json      # Coach decision contracts
 │   └── renderer-payloads.schema.json   # Renderer payload formats
-└── reference-impl/
-    ├── guidance-engine.ts              # Policy engine implementation
-    ├── take-segmenter.ts               # Take segmentation state machine
-    ├── analysis-to-intent.ts           # Bridge: TakeAnalysis → CoachIntent
-    ├── cue-bindings.ts                 # Cue binding table (intent → cue_key)
-    └── renderer-payloads.ts            # Pulse scheduling and payload builders
+├── reference-impl/
+│   ├── guidance-engine.ts              # Policy engine implementation
+│   ├── take-segmenter.ts               # Take segmentation state machine
+│   ├── analysis-to-intent.ts           # Bridge: TakeAnalysis → CoachIntent
+│   ├── cue-bindings.ts                 # Cue binding table (intent → cue_key)
+│   └── renderer-payloads.ts            # Pulse scheduling and payload builders
+└── tests/
+    ├── fixtures/                       # G1-G6 test fixtures (JSON)
+    ├── golden-path.test.ts             # Full pipeline integration tests
+    └── pulse-math.test.ts              # Quantization micro tests (P1-P3)
 ```
 
 ## Key Concepts
