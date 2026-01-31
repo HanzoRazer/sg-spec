@@ -1,0 +1,22 @@
+{
+  "intent": "wait_for_count_in",
+  "cue_key": "wait_for_count_in_then_enter",
+  "analysis_confidence": 0.728,
+  "gradeability": "OK",
+  "suppressed": true,
+  "guidance": {
+    "shouldInitiate": true,
+    "reason": "ok",
+    "mode": "PRACTICE",
+    "backoff": "L1",
+    "modality": "visual"
+  },
+  "renderer": {
+    "type": "RendererEnvelope",
+    "payload_type": "TextPromptPayload",
+    "pulse_type": null,
+    "deliver_at_ms": 1009200,
+    "selected_modality": "visual"
+  },
+  "pulses": null
+}
