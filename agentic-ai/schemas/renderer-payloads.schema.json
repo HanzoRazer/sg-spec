@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartguitar.dev/schemas/agentic-ai/renderer-payloads.schema.json",
+  "title": "Smart Guitar Renderer Payloads",
+  "description": "Last-mile payload format for device/UI layer. Includes pulse timing, count-in, bar counter, and composite payloads.",
+
+  "$defs": {
+    "Modality": {
+      "type": "string",
+      "enum": ["haptic", "visual", "audio", "text"]
+    },
+
+    "Meter": {
+      "type": "string",
+      "enum": ["4/4", "3/4", "6/8"]
+    },
+
+    "Subdivision": {
+      "type": "string",
+      "enum": ["4n", "8n", "16n"]
+    },
+
+    "PulseType": {
+      "type": "string",
+      "enum": ["subdivision", "metronome", "backbeat"]
+    },
+
+    "IntensityLevel": {
+      "type": "string",
+      "enum": ["light", "medium", "strong"]
+    },
+
+    "HapticPulseParams": {
+      "type": "object",
+      "required": ["waveform", "pulse_width_ms", "min_gap_ms", "strength_curve"],
+      "properties": {
+        "waveform": { "type": "string", "enum": ["tap", "thump"] },
+        "pulse_width_ms": { "type": "number", "minimum": 0 },
+        "min_gap_ms": { "type": "number", "minimum": 0 },
+        "strength_curve": { "type": "string", "enum": ["linear", "ease_out"] }
+      }
+    },
+
+    "VisualPulseParams": {
+      "type": "object",
+      "required": ["style", "pulse_width_ms", "brightness", "decay_ms", "target"],
+      "properties": {
+        "style": { "type": "string", "enum": ["blink", "glow"] },
+        "pulse_width_ms": { "type": "number", "minimum": 0 },
+        "brightness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "decay_ms": { "type": "number", "minimum": 0 },
+        "target": { "type": "string", "enum": ["global", "beat_marker", "subdivision_marker"] }
+      }
+    },
+
+    "AudioPulseParams": {
+      "type": "object",
+      "required": ["sound", "gain", "duration_ms"],
+      "properties": {
+        "sound": { "type": "string", "enum": ["click", "tick"] },
+        "gain": { "type": "number", "minimum": 0, "maximum": 1 },
+        "pan": { "type": "number", "minimum": -1, "maximum": 1 },
+        "duration_ms": { "type": "number", "minimum": 0 },
+        "accent_sound": { "type": "string", "enum": ["click", "clack"] },
+        "accent_gain_delta": { "type": "number" }
+      }
+    },
+
+    "PulseAccent": {
+      "type": "object",
+      "required": ["slot_index_in_bar", "accent_gain"],
+      "properties": {
+        "slot_index_in_bar": { "type": "integer", "minimum": 0 },
+        "accent_gain": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+
+    "PulsePayload": {
+      "type": "object",
+      "required": ["type", "pulse_type", "timing", "intensity", "pattern", "output"],
+      "properties": {
+        "type": { "const": "PulsePayload" },
+        "pulse_type": { "$ref": "#/$defs/PulseType" },
+        "timing": {
+          "type": "object",
+          "required": ["rate_hz", "phase", "start_ms", "end_ms", "quantize"],
+          "properties": {
+            "rate_hz": { "type": "number", "minimum": 0 },
+            "phase": {
+              "type": "object",
+              "required": ["anchor", "anchor_time_ms", "phase_offset_ms"],
+              "properties": {
+                "anchor": { "type": "string", "enum": ["grid_start", "deliver_at"] },
+                "anchor_time_ms": { "type": "number" },
+                "phase_offset_ms": { "type": "number" }
+              }
+            },
+            "start_ms": { "type": "number" },
+            "end_ms": { "type": "number" },
+            "quantize": {
+              "type": "object",
+              "required": ["enabled", "quantum_ms", "max_snap_ms"],
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "quantum_ms": { "type": "number", "minimum": 0 },
+                "max_snap_ms": { "type": "number", "minimum": 0 }
+              }
+            }
+          }
+        },
+        "intensity": {
+          "type": "object",
+          "required": ["level", "gain", "ramp_ms"],
+          "properties": {
+            "level": { "$ref": "#/$defs/IntensityLevel" },
+            "gain": { "type": "number", "minimum": 0, "maximum": 1 },
+            "ramp_ms": { "type": "number", "minimum": 0 }
+          }
+        },
+        "pattern": {
+          "type": "object",
+          "required": ["subdivision", "accents", "repeat_every_bar"],
+          "properties": {
+            "subdivision": { "$ref": "#/$defs/Subdivision" },
+            "accents": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/PulseAccent" }
+            },
+            "suppress_slots_in_bar": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 0 }
+            },
+            "repeat_every_bar": { "type": "boolean" }
+          }
+        },
+        "output": {
+          "type": "object",
+          "required": ["modality"],
+          "properties": {
+            "modality": { "$ref": "#/$defs/Modality" },
+            "haptic": { "$ref": "#/$defs/HapticPulseParams" },
+            "visual": { "$ref": "#/$defs/VisualPulseParams" },
+            "audio": { "$ref": "#/$defs/AudioPulseParams" }
+          }
+        }
+      }
+    },
+
+    "CountInPayload": {
+      "type": "object",
+      "required": ["type", "beats", "bpm", "start_ms", "modality", "style", "intensity"],
+      "properties": {
+        "type": { "const": "CountInPayload" },
+        "beats": { "type": "integer", "minimum": 1 },
+        "bpm": { "type": "number", "minimum": 20, "maximum": 300 },
+        "start_ms": { "type": "number" },
+        "modality": { "$ref": "#/$defs/Modality" },
+        "style": { "type": "string", "enum": ["ticks", "spoken", "flash"] },
+        "intensity": { "$ref": "#/$defs/IntensityLevel" }
+      }
+    },
+
+    "BarCounterPayload": {
+      "type": "object",
+      "required": ["type", "total_bars", "start_ms", "bar_duration_ms", "style", "show_beat_subdivisions"],
+      "properties": {
+        "type": { "const": "BarCounterPayload" },
+        "total_bars": { "type": "integer", "minimum": 1 },
+        "start_ms": { "type": "number" },
+        "bar_duration_ms": { "type": "number", "minimum": 0 },
+        "style": { "type": "string", "enum": ["numeric", "progress", "dots"] },
+        "show_beat_subdivisions": { "type": "boolean" }
+      }
+    },
+
+    "TextPromptPayload": {
+      "type": "object",
+      "required": ["type", "cue_key", "text", "display_ms", "position", "style"],
+      "properties": {
+        "type": { "const": "TextPromptPayload" },
+        "cue_key": { "type": "string" },
+        "text": { "type": "string" },
+        "display_ms": { "type": "number", "minimum": 0 },
+        "position": { "type": "string", "enum": ["top", "center", "bottom"] },
+        "style": { "type": "string", "enum": ["toast", "overlay", "inline"] }
+      }
+    },
+
+    "CompositePayload": {
+      "type": "object",
+      "required": ["type", "parts", "sync"],
+      "properties": {
+        "type": { "const": "CompositePayload" },
+        "parts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RendererPayload" }
+        },
+        "sync": {
+          "type": "object",
+          "required": ["anchor", "anchor_time_ms"],
+          "properties": {
+            "anchor": { "const": "grid_start" },
+            "anchor_time_ms": { "type": "number" }
+          }
+        }
+      }
+    },
+
+    "RendererPayload": {
+      "oneOf": [
+        { "$ref": "#/$defs/PulsePayload" },
+        { "$ref": "#/$defs/CountInPayload" },
+        { "$ref": "#/$defs/BarCounterPayload" },
+        { "$ref": "#/$defs/TextPromptPayload" },
+        { "$ref": "#/$defs/CompositePayload" }
+      ]
+    },
+
+    "MusicalContext": {
+      "type": "object",
+      "required": ["bpm", "meter", "bars", "subdivision", "grid_start_ms", "slot_ms"],
+      "properties": {
+        "bpm": { "type": "number", "minimum": 20, "maximum": 300 },
+        "meter": { "$ref": "#/$defs/Meter" },
+        "bars": { "type": "integer", "minimum": 1 },
+        "subdivision": { "$ref": "#/$defs/Subdivision" },
+        "grid_start_ms": { "type": "number" },
+        "slot_ms": { "type": "number", "minimum": 0 }
+      }
+    },
+
+    "RendererEnvelope": {
+      "type": "object",
+      "required": ["type", "t_ms", "selected_modality", "deliver_at_ms", "delivery_window_ms", "musical", "payload"],
+      "properties": {
+        "type": { "const": "RendererEnvelope" },
+        "t_ms": { "type": "integer", "description": "Timestamp when envelope was created" },
+        "selected_modality": { "$ref": "#/$defs/Modality" },
+        "deliver_at_ms": { "type": "number", "description": "Target delivery time" },
+        "delivery_window_ms": { "type": "number", "minimum": 0, "description": "Acceptable delivery window" },
+        "musical": { "$ref": "#/$defs/MusicalContext" },
+        "payload": { "$ref": "#/$defs/RendererPayload" },
+        "debug": {
+          "type": "object",
+          "properties": {
+            "cue_key": { "type": "string" },
+            "take_id": { "type": "string" },
+            "decision_id": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+
+  "oneOf": [
+    { "$ref": "#/$defs/RendererEnvelope" },
+    { "$ref": "#/$defs/RendererPayload" }
+  ]
+}
