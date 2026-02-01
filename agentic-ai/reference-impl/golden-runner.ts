@@ -24,6 +24,12 @@ import {
 } from "./analysis-to-intent";
 
 import {
+  resolveTeachingObjective,
+  objectiveToIntent,
+  type TeachingObjective,
+} from "./objective-resolver";
+
+import {
   bindCue,
   type CueBinding,
   type Modality,
@@ -103,7 +109,8 @@ export interface GoldenRunInput {
 // ============================================================================
 
 export interface GoldenRunResult {
-  // Stage 1: Intent resolution
+  // Stage 1: Objective + Intent resolution
+  objective: TeachingObjective;
   intent: CoachIntent;
   analysis_confidence: number;
   gradeability: Gradeability;
@@ -319,14 +326,21 @@ export function runGoldenPath(
     });
   }
 
-  // Stage 1: Resolve intent with diagnostics
+  // Stage 1: Resolve objective (semantic goal) then derive intent
+  const objective = resolveTeachingObjective(
+    takeAnalysis,
+    finalize_reason,
+    segmenterFlags
+  );
+  const intent = objectiveToIntent(objective);
+
+  // Get diagnostics (confidence, gradeability, suppression) from existing resolver
   const resolution = resolveWithDiagnostics(
     takeAnalysis,
     finalize_reason,
     segmenterFlags
   );
-
-  const { intent, analysis_confidence, gradeability, suppressed } = resolution;
+  const { analysis_confidence, gradeability, suppressed } = resolution;
 
   // Stage 2: Get cue binding
   const binding = bindCue(intent);
@@ -451,6 +465,7 @@ export function runGoldenPath(
   }
 
   return {
+    objective,
     intent,
     analysis_confidence,
     gradeability,
@@ -474,6 +489,8 @@ export type {
   CoachIntent,
   Gradeability,
 } from "./analysis-to-intent";
+
+export type { TeachingObjective } from "./objective-resolver";
 
 export type {
   CueBinding,

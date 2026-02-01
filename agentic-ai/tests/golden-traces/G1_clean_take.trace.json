@@ -1,4 +1,5 @@
 {
+  "objective": "ADVANCE_DIFFICULTY",
   "intent": "raise_challenge",
   "cue_key": "nice_lock_in_bump_tempo",
   "analysis_confidence": 0.907,

@@ -1,4 +1,5 @@
 {
+  "objective": "MATCH_TARGET_TEMPO",
   "intent": "slow_down_enable_pulse",
   "cue_key": "slow_down_and_use_pulse",
   "analysis_confidence": 0.904,

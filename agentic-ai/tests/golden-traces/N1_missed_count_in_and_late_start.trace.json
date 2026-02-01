@@ -1,4 +1,5 @@
 {
+  "objective": "REENTER_ON_COUNT_IN",
   "intent": "wait_for_count_in",
   "cue_key": "wait_for_count_in_then_enter",
   "analysis_confidence": 0.619,

@@ -1,4 +1,5 @@
 {
+  "objective": "ANCHOR_BACKBEAT",
   "intent": "backbeat_anchor",
   "cue_key": "emphasize_2_and_4",
   "analysis_confidence": 0.91,

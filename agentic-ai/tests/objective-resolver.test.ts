@@ -8,11 +8,13 @@ import { describe, it, expect } from "vitest";
 import {
   resolveTeachingObjective,
   objectiveToIntent,
+  intentToObjective,
   type TakeAnalysis,
   type SegmenterFlags,
   type FinalizeReason,
   type TeachingObjective,
 } from "../reference-impl/objective-resolver";
+import type { CoachIntent } from "../reference-impl/analysis-to-intent";
 
 // ============================================================================
 // Test Helpers
@@ -151,9 +153,9 @@ describe("objective-resolver (12-case table)", () => {
       expectedIntent: "clarify_exercise_length",
     },
 
-    // N4: low_confidence_storm -> fallback to REPEAT_WITH_SAME_SETTINGS
+    // N4: low_confidence_storm -> fallback to RECOVER_TAKE (try again safely)
     {
-      id: "N4: low_confidence_storm => REPEAT_WITH_SAME_SETTINGS",
+      id: "N4: low_confidence_storm => RECOVER_TAKE",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags({ low_confidence_events: 12 }),
       analysis: analysisWithMetrics({
@@ -164,7 +166,7 @@ describe("objective-resolver (12-case table)", () => {
         median_offset_ms: 0,
         stability: 0.78,
       }),
-      expectedObjective: "REPEAT_WITH_SAME_SETTINGS",
+      expectedObjective: "RECOVER_TAKE",
       expectedIntent: "repeat_once",
     },
 
@@ -178,9 +180,9 @@ describe("objective-resolver (12-case table)", () => {
       expectedIntent: "raise_challenge",
     },
 
-    // N6a/N6b: quantize boundary tests -> REPEAT_WITH_SAME_SETTINGS
+    // N6a/N6b: quantize boundary tests -> RECOVER_TAKE (try again safely)
     {
-      id: "N6a: quantize_inside_tolerance => REPEAT_WITH_SAME_SETTINGS",
+      id: "N6a: quantize_inside_tolerance => RECOVER_TAKE",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags(),
       analysis: analysisWithMetrics({
@@ -189,7 +191,7 @@ describe("objective-resolver (12-case table)", () => {
         extra_rate: 0.05,
         stability: 0.8,
       }),
-      expectedObjective: "REPEAT_WITH_SAME_SETTINGS",
+      expectedObjective: "RECOVER_TAKE",
       expectedIntent: "repeat_once",
     },
 
@@ -197,23 +199,23 @@ describe("objective-resolver (12-case table)", () => {
     // Musical ladder cases
     // ------------------------
 
-    // M1: coverageProblem (hit_rate < 0.75) -> IMPROVE_COVERAGE
+    // M1: coverageProblem (hit_rate < 0.75) -> MATCH_TARGET_TEMPO (needs tempo correction)
     {
-      id: "M1: coverage_problem => IMPROVE_COVERAGE",
+      id: "M1: coverage_problem => MATCH_TARGET_TEMPO",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags(),
       analysis: analysisWithMetrics({ hit_rate: 0.74, miss_rate: 0.26, p90_abs_offset_ms: 40, extra_rate: 0.05, stability: 0.6 }),
-      expectedObjective: "IMPROVE_COVERAGE",
+      expectedObjective: "MATCH_TARGET_TEMPO",
       expectedIntent: "slow_down_enable_pulse",
     },
 
-    // M2: driftProblem (|drift| > 30) -> STABILIZE_TEMPO_DRIFT
+    // M2: driftProblem (|drift| > 30) -> ANCHOR_BACKBEAT (feel 2 & 4)
     {
-      id: "M2: drift_problem => STABILIZE_TEMPO_DRIFT",
+      id: "M2: drift_problem => ANCHOR_BACKBEAT",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags(),
       analysis: analysisWithMetrics({ hit_rate: 0.82, p90_abs_offset_ms: 44, extra_rate: 0.05, drift_ms_per_bar: -45, stability: 0.75 }),
-      expectedObjective: "STABILIZE_TEMPO_DRIFT",
+      expectedObjective: "ANCHOR_BACKBEAT",
       expectedIntent: "backbeat_anchor",
     },
 
@@ -252,21 +254,21 @@ describe("objective-resolver (12-case table)", () => {
 // ============================================================================
 
 describe("objectiveToIntent exhaustiveness", () => {
+  // 11 objectives with 1:1 mapping to CoachIntent
   const allObjectives: TeachingObjective[] = [
+    // Take-quality (6)
     "RECOVER_TAKE",
     "REENTER_ON_COUNT_IN",
     "ALIGN_FIRST_DOWNBEAT",
     "COMPLETE_REQUIRED_FORM",
     "MATCH_TARGET_TEMPO",
     "MATCH_EXERCISE_LENGTH",
-    "REDUCE_FALSE_TRIGGERS",
-    "ADVANCE_DIFFICULTY",
-    "IMPROVE_COVERAGE",
-    "REDUCE_EXTRA_MOTION",
-    "STABILIZE_TEMPO_DRIFT",
-    "CENTER_TIMING_BIAS",
+    // Musical-performance (5)
     "TIGHTEN_SUBDIVISION",
-    "REPEAT_WITH_SAME_SETTINGS",
+    "ANCHOR_BACKBEAT",
+    "REDUCE_EXTRA_MOTION",
+    "CENTER_TIMING_BIAS",
+    "ADVANCE_DIFFICULTY",
   ];
 
   for (const obj of allObjectives) {
@@ -276,4 +278,55 @@ describe("objectiveToIntent exhaustiveness", () => {
       expect(intent.length).toBeGreaterThan(0);
     });
   }
+});
+
+// ============================================================================
+// Objective ↔ Intent Coherence (1:1 round-trip)
+// ============================================================================
+
+describe("objective ↔ intent coherence", () => {
+  // All 11 CoachIntents
+  const allIntents: CoachIntent[] = [
+    "repeat_once",
+    "wait_for_count_in",
+    "start_on_downbeat",
+    "finish_two_bars",
+    "slow_down_enable_pulse",
+    "clarify_exercise_length",
+    "subdivision_support",
+    "backbeat_anchor",
+    "reduce_motion",
+    "timing_centering",
+    "raise_challenge",
+  ];
+
+  it("round-trips for all intents: objectiveToIntent(intentToObjective(intent)) === intent", () => {
+    for (const intent of allIntents) {
+      const objective = intentToObjective(intent);
+      const roundTrip = objectiveToIntent(objective);
+      expect(roundTrip).toBe(intent);
+    }
+  });
+
+  it("round-trips for all objectives: intentToObjective(objectiveToIntent(obj)) === obj", () => {
+    const allObjectives: TeachingObjective[] = [
+      "RECOVER_TAKE",
+      "REENTER_ON_COUNT_IN",
+      "ALIGN_FIRST_DOWNBEAT",
+      "COMPLETE_REQUIRED_FORM",
+      "MATCH_TARGET_TEMPO",
+      "MATCH_EXERCISE_LENGTH",
+      "TIGHTEN_SUBDIVISION",
+      "ANCHOR_BACKBEAT",
+      "REDUCE_EXTRA_MOTION",
+      "CENTER_TIMING_BIAS",
+      "ADVANCE_DIFFICULTY",
+    ];
+
+    for (const obj of allObjectives) {
+      const intent = objectiveToIntent(obj);
+      const roundTrip = intentToObjective(intent);
+      expect(roundTrip).toBe(obj);
+    }
+  });
 });

@@ -61,6 +61,9 @@ export interface TakeAnalysis {
 /**
  * TeachingObjective is a stable pedagogical goal.
  * It should change slowly; cue bindings and phrasing can change frequently.
+ *
+ * The 1:1 mapping with CoachIntent is intentional for the initial integration.
+ * Later, multiple objectives can map to the same intent (or vice versa).
  */
 export type TeachingObjective =
   // === Capture / Take-quality objectives (fix the input) ===
@@ -70,19 +73,16 @@ export type TeachingObjective =
   | "COMPLETE_REQUIRED_FORM" // partial take: finish 2 bars / required length
   | "MATCH_TARGET_TEMPO" // tempo mismatch: slow down + enable pulse
   | "MATCH_EXERCISE_LENGTH" // extra bars: correct length / stop at boundary
-  | "REDUCE_FALSE_TRIGGERS" // (future) detector hygiene
 
   // === Musical-performance objectives (fix playing) ===
-  | "ADVANCE_DIFFICULTY" // pass: increase tempo / challenge
-  | "IMPROVE_COVERAGE" // too few expected hits: slow down + support
-  | "REDUCE_EXTRA_MOTION" // too many extra events: simplify / smaller motion
-  | "STABILIZE_TEMPO_DRIFT" // drift: anchor groove
-  | "CENTER_TIMING_BIAS" // systematic early/late: aim center
   | "TIGHTEN_SUBDIVISION" // timing spread / stability weak: add subdivision support
-  | "REPEAT_WITH_SAME_SETTINGS"; // default safe fallback
+  | "ANCHOR_BACKBEAT" // drift: feel 2 & 4
+  | "REDUCE_EXTRA_MOTION" // too many extra events: simplify / smaller motion
+  | "CENTER_TIMING_BIAS" // systematic early/late: aim center
+  | "ADVANCE_DIFFICULTY"; // pass: increase tempo / challenge
 
 // ============================================================================
-// Objective → Intent Bridge
+// Objective ↔ Intent Bridge (1:1 lossless mapping)
 // ============================================================================
 
 /**
@@ -103,28 +103,62 @@ export function objectiveToIntent(obj: TeachingObjective): CoachIntent {
       return "slow_down_enable_pulse";
     case "MATCH_EXERCISE_LENGTH":
       return "clarify_exercise_length";
-    case "REDUCE_FALSE_TRIGGERS":
-      // If/when you add this intent, swap. For now, safest fallback:
-      return "repeat_once";
 
     // Musical
-    case "ADVANCE_DIFFICULTY":
-      return "raise_challenge";
-    case "IMPROVE_COVERAGE":
-      return "slow_down_enable_pulse";
-    case "REDUCE_EXTRA_MOTION":
-      return "reduce_motion";
-    case "STABILIZE_TEMPO_DRIFT":
-      return "backbeat_anchor";
-    case "CENTER_TIMING_BIAS":
-      return "timing_centering";
     case "TIGHTEN_SUBDIVISION":
       return "subdivision_support";
-    case "REPEAT_WITH_SAME_SETTINGS":
-      return "repeat_once";
+    case "ANCHOR_BACKBEAT":
+      return "backbeat_anchor";
+    case "REDUCE_EXTRA_MOTION":
+      return "reduce_motion";
+    case "CENTER_TIMING_BIAS":
+      return "timing_centering";
+    case "ADVANCE_DIFFICULTY":
+      return "raise_challenge";
+
     default: {
       // Exhaustiveness guard
       const _exhaustive: never = obj;
+      return _exhaustive;
+    }
+  }
+}
+
+/**
+ * Bridge intent → objective (inverse of objectiveToIntent)
+ * Used for coherence testing and trace normalization.
+ */
+export function intentToObjective(intent: CoachIntent): TeachingObjective {
+  switch (intent) {
+    // Take-quality
+    case "repeat_once":
+      return "RECOVER_TAKE";
+    case "wait_for_count_in":
+      return "REENTER_ON_COUNT_IN";
+    case "start_on_downbeat":
+      return "ALIGN_FIRST_DOWNBEAT";
+    case "finish_two_bars":
+      return "COMPLETE_REQUIRED_FORM";
+    case "slow_down_enable_pulse":
+      return "MATCH_TARGET_TEMPO";
+    case "clarify_exercise_length":
+      return "MATCH_EXERCISE_LENGTH";
+
+    // Musical
+    case "subdivision_support":
+      return "TIGHTEN_SUBDIVISION";
+    case "backbeat_anchor":
+      return "ANCHOR_BACKBEAT";
+    case "reduce_motion":
+      return "REDUCE_EXTRA_MOTION";
+    case "timing_centering":
+      return "CENTER_TIMING_BIAS";
+    case "raise_challenge":
+      return "ADVANCE_DIFFICULTY";
+
+    default: {
+      // Exhaustiveness guard
+      const _exhaustive: never = intent;
       return _exhaustive;
     }
   }
@@ -196,6 +230,7 @@ function stabilityProblem(m: TakeMetrics): boolean {
  * Priority model:
  * 1) Hard exits (cancel/restart) → recover safely
  * 2) Mechanical take-quality issues (suppress musical coaching)
+ * 2b) Low-confidence storm → metrics unreliable, recover safely
  * 3) Musical coaching ordered by "most corrective" first
  */
 export function resolveTeachingObjective(
@@ -213,15 +248,24 @@ export function resolveTeachingObjective(
   if (flags.partial_take) return "COMPLETE_REQUIRED_FORM";
   if (flags.tempo_mismatch) return "MATCH_TARGET_TEMPO";
   if (flags.extra_bars) return "MATCH_EXERCISE_LENGTH";
-  if (flags.reduce_false_triggers) return "REDUCE_FALSE_TRIGGERS";
+  // reduce_false_triggers: not in current intent union, use RECOVER_TAKE as safe fallback
+  if (flags.reduce_false_triggers) return "RECOVER_TAKE";
+
+  // Low-confidence detection storm: metrics are unreliable, fall back to safe reattempt
+  // Threshold: if >= 10 events had low confidence, don't trust the metrics for coaching
+  const LOW_CONFIDENCE_STORM_THRESHOLD = 10;
+  if ((flags.low_confidence_events ?? 0) >= LOW_CONFIDENCE_STORM_THRESHOLD) {
+    return "RECOVER_TAKE";
+  }
 
   // === 3) Musical coaching (ordered by severity) ===
   const m = analysis.metrics;
 
   if (isPassWithStability(m)) return "ADVANCE_DIFFICULTY";
-  if (coverageProblem(m)) return "IMPROVE_COVERAGE";
+  // Coverage problem semantically needs tempo correction (slow_down_enable_pulse)
+  if (coverageProblem(m)) return "MATCH_TARGET_TEMPO";
   if (extraProblem(m)) return "REDUCE_EXTRA_MOTION";
-  if (driftProblem(m)) return "STABILIZE_TEMPO_DRIFT";
+  if (driftProblem(m)) return "ANCHOR_BACKBEAT";
   if (biasProblem(m)) return "CENTER_TIMING_BIAS";
 
   // Stability-only gap fix:
@@ -231,7 +275,8 @@ export function resolveTeachingObjective(
   // Existing spread-based subdivision support
   if (timingSpreadProblem(m)) return "TIGHTEN_SUBDIVISION";
 
-  return "REPEAT_WITH_SAME_SETTINGS";
+  // Default fallback: try again safely
+  return "RECOVER_TAKE";
 }
 
 /**

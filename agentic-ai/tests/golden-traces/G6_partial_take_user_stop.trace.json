@@ -1,4 +1,5 @@
 {
+  "objective": "COMPLETE_REQUIRED_FORM",
   "intent": "finish_two_bars",
   "cue_key": "finish_two_bars_slow_if_needed",
   "analysis_confidence": 0.365,

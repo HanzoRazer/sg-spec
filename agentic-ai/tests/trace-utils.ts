@@ -27,7 +27,8 @@ export interface PulseSummary {
 }
 
 export interface GoldenTrace {
-  // Intent resolution
+  // Objective + Intent resolution
+  objective: string;
   intent: string;
   cue_key: string;
   analysis_confidence: number; // Rounded to 3 decimals
@@ -127,6 +128,7 @@ export function normalizeTrace(result: GoldenRunResult): GoldenTrace {
   }
 
   return {
+    objective: result.objective,
     intent: result.intent,
     cue_key: result.cue_key,
     analysis_confidence: roundTo3(result.analysis_confidence),
