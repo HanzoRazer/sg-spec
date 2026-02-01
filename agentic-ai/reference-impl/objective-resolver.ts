@@ -13,6 +13,7 @@
  */
 
 import type { CoachIntent } from "./analysis-to-intent";
+import { detectHotspot, type HotspotAnalysis, type HotspotKind } from "./hotspot-detector";
 
 // Re-export types for convenience (aligned with analysis-to-intent.ts)
 export type FinalizeReason = "GRID_COMPLETE" | "USER_STOP" | "CANCELLED" | "RESTART";
@@ -43,6 +44,19 @@ export interface TakeMetrics {
   stability: number; // 0..1
 }
 
+export interface TakeAlignment {
+  matched: Array<{ slot: number; seq: number; offset_ms: number }>;
+  missed_slots: number[];
+  extra_seqs: number[];
+}
+
+export interface TakeGrid {
+  grid_start_ms: number;
+  slot_ms: number;
+  total_slots: number;
+  expected_slots: number[];
+}
+
 export interface TakeAnalysis {
   type: "TakeAnalysis";
   exercise_id: string;
@@ -52,6 +66,9 @@ export interface TakeAnalysis {
     event_confidence_mean?: number; // 0..1
     analysis_confidence?: number; // 0..1
   };
+  // Optional alignment data for hotspot detection
+  alignment?: TakeAlignment;
+  grid?: TakeGrid;
 }
 
 // ============================================================================
@@ -79,7 +96,10 @@ export type TeachingObjective =
   | "ANCHOR_BACKBEAT" // drift: feel 2 & 4
   | "REDUCE_EXTRA_MOTION" // too many extra events: simplify / smaller motion
   | "CENTER_TIMING_BIAS" // systematic early/late: aim center
-  | "ADVANCE_DIFFICULTY"; // pass: increase tempo / challenge
+  | "ADVANCE_DIFFICULTY" // pass: increase tempo / challenge
+
+  // === Error localization objectives (targeted coaching) ===
+  | "FIX_REPEATABLE_SLOT_ERRORS"; // hotspot detected: coach specific slots
 
 // ============================================================================
 // Objective ↔ Intent Bridge (1:1 lossless mapping)
@@ -116,12 +136,37 @@ export function objectiveToIntent(obj: TeachingObjective): CoachIntent {
     case "ADVANCE_DIFFICULTY":
       return "raise_challenge";
 
+    // Error localization (maps to existing intents based on hotspot kind)
+    // Default: subdivision_support (offbeats are most common hotspot)
+    // Use objectiveToIntentWithHotspot() for context-aware mapping
+    case "FIX_REPEATABLE_SLOT_ERRORS":
+      return "subdivision_support";
+
     default: {
       // Exhaustiveness guard
       const _exhaustive: never = obj;
       return _exhaustive;
     }
   }
+}
+
+/**
+ * Context-aware objective → intent mapping for hotspot objectives.
+ * Uses hotspot kind to select the most appropriate intent.
+ */
+export function objectiveToIntentWithHotspot(
+  obj: TeachingObjective,
+  hotspotKind?: HotspotKind | null
+): CoachIntent {
+  if (obj === "FIX_REPEATABLE_SLOT_ERRORS" && hotspotKind) {
+    // Downbeat/early_bar issues → timing_centering (foundational timing)
+    // Offbeat/back_half issues → subdivision_support (subdivision feel)
+    if (hotspotKind === "downbeats" || hotspotKind === "early_bar") {
+      return "timing_centering";
+    }
+    return "subdivision_support";
+  }
+  return objectiveToIntent(obj);
 }
 
 /**
@@ -231,7 +276,16 @@ function stabilityProblem(m: TakeMetrics): boolean {
  * 1) Hard exits (cancel/restart) → recover safely
  * 2) Mechanical take-quality issues (suppress musical coaching)
  * 2b) Low-confidence storm → metrics unreliable, recover safely
- * 3) Musical coaching ordered by "most corrective" first
+ * 3) Musical coaching ordered by "most corrective" first:
+ *    - pass+stable → advance
+ *    - coverage < 75% → slow down
+ *    - extra > 15% → reduce motion
+ *    - drift > 30ms/bar → anchor backbeat (dominates hotspot)
+ *    - hotspot detected → FIX_REPEATABLE_SLOT_ERRORS (new)
+ *    - bias > 20ms → center timing
+ *    - stability < 70% → subdivision support
+ *    - spread > 45ms p90 → subdivision support
+ *    - fallback → recover
  */
 export function resolveTeachingObjective(
   analysis: TakeAnalysis,
@@ -265,7 +319,22 @@ export function resolveTeachingObjective(
   // Coverage problem semantically needs tempo correction (slow_down_enable_pulse)
   if (coverageProblem(m)) return "MATCH_TARGET_TEMPO";
   if (extraProblem(m)) return "REDUCE_EXTRA_MOTION";
-  if (driftProblem(m)) return "ANCHOR_BACKBEAT";
+  if (driftProblem(m)) return "ANCHOR_BACKBEAT"; // Drift dominates hotspot
+
+  // === 3b) Hotspot detection (after drift, before bias/stability) ===
+  // If alignment data is available, check for repeatable slot errors
+  if (analysis.alignment && analysis.grid) {
+    const slotsPerBar = 8; // Default for 4/4 with 8th notes
+    const hotspot = detectHotspot(
+      analysis.alignment,
+      analysis.grid.total_slots,
+      slotsPerBar
+    );
+    if (hotspot.has_hotspot) {
+      return "FIX_REPEATABLE_SLOT_ERRORS";
+    }
+  }
+
   if (biasProblem(m)) return "CENTER_TIMING_BIAS";
 
   // Stability-only gap fix:

@@ -254,7 +254,7 @@ describe("objective-resolver (12-case table)", () => {
 // ============================================================================
 
 describe("objectiveToIntent exhaustiveness", () => {
-  // 11 objectives with 1:1 mapping to CoachIntent
+  // 12 objectives (11 canonical + 1 error-localization)
   const allObjectives: TeachingObjective[] = [
     // Take-quality (6)
     "RECOVER_TAKE",
@@ -269,6 +269,8 @@ describe("objectiveToIntent exhaustiveness", () => {
     "REDUCE_EXTRA_MOTION",
     "CENTER_TIMING_BIAS",
     "ADVANCE_DIFFICULTY",
+    // Error-localization (1) - shares intent with TIGHTEN_SUBDIVISION
+    "FIX_REPEATABLE_SLOT_ERRORS",
   ];
 
   for (const obj of allObjectives) {
@@ -309,7 +311,8 @@ describe("objective ↔ intent coherence", () => {
   });
 
   it("round-trips for all objectives: intentToObjective(objectiveToIntent(obj)) === obj", () => {
-    const allObjectives: TeachingObjective[] = [
+    // Only canonical objectives (not FIX_REPEATABLE_SLOT_ERRORS which shares intent)
+    const canonicalObjectives: TeachingObjective[] = [
       "RECOVER_TAKE",
       "REENTER_ON_COUNT_IN",
       "ALIGN_FIRST_DOWNBEAT",
@@ -323,10 +326,223 @@ describe("objective ↔ intent coherence", () => {
       "ADVANCE_DIFFICULTY",
     ];
 
-    for (const obj of allObjectives) {
+    for (const obj of canonicalObjectives) {
       const intent = objectiveToIntent(obj);
       const roundTrip = intentToObjective(intent);
       expect(roundTrip).toBe(obj);
     }
+  });
+
+  it("FIX_REPEATABLE_SLOT_ERRORS maps to subdivision_support (shares with TIGHTEN_SUBDIVISION)", () => {
+    // This is a many-to-one mapping: multiple objectives can share an intent
+    const intent = objectiveToIntent("FIX_REPEATABLE_SLOT_ERRORS");
+    expect(intent).toBe("subdivision_support");
+    // Inverse maps to canonical objective
+    const canonical = intentToObjective(intent);
+    expect(canonical).toBe("TIGHTEN_SUBDIVISION");
+  });
+});
+
+// ============================================================================
+// Hotspot Detection (H1-H4)
+// ============================================================================
+
+describe("hotspot detection", () => {
+  // Helper to create analysis with alignment data
+  function analysisWithAlignment(
+    metrics: Partial<TakeAnalysis["metrics"]>,
+    alignment: { matched: Array<{ slot: number; seq: number; offset_ms: number }>; missed_slots: number[]; extra_seqs: number[] },
+    grid: { total_slots: number }
+  ): TakeAnalysis {
+    return {
+      type: "TakeAnalysis",
+      exercise_id: "2bar_eighth_down",
+      take_id: "take_hotspot",
+      metrics: {
+        hit_rate: 0.5,
+        miss_rate: 0.5,
+        extra_rate: 0.05,
+        mean_offset_ms: 8,
+        median_offset_ms: 6,
+        std_offset_ms: 18,
+        p90_abs_offset_ms: 35,
+        drift_ms_per_bar: 8,
+        stability: 0.72,
+        ...metrics,
+      },
+      quality: { analysis_confidence: 0.85, event_confidence_mean: 0.88 },
+      alignment,
+      grid: {
+        grid_start_ms: 1001500,
+        slot_ms: 375,
+        total_slots: grid.total_slots,
+        expected_slots: Array.from({ length: grid.total_slots }, (_, i) => i),
+      },
+    };
+  }
+
+  it("H1: offbeat hotspot => FIX_REPEATABLE_SLOT_ERRORS", () => {
+    // 4 bars (32 slots): miss only offbeats in bars 1 & 2 (slots 1,3,5,7,9,11,13,15)
+    // hit_rate = 24/32 = 0.75 (passes coverage check)
+    // 100% of misses are offbeats → clear hotspot
+    const analysis = analysisWithAlignment(
+      { hit_rate: 0.75, drift_ms_per_bar: 8, stability: 0.72 },
+      {
+        matched: [
+          // All downbeats hit
+          { slot: 0, seq: 101, offset_ms: 5 },
+          { slot: 2, seq: 102, offset_ms: -8 },
+          { slot: 4, seq: 103, offset_ms: 10 },
+          { slot: 6, seq: 104, offset_ms: -5 },
+          { slot: 8, seq: 105, offset_ms: 12 },
+          { slot: 10, seq: 106, offset_ms: -10 },
+          { slot: 12, seq: 107, offset_ms: 8 },
+          { slot: 14, seq: 108, offset_ms: -6 },
+          // Bars 3-4: all slots hit
+          { slot: 16, seq: 109, offset_ms: 5 },
+          { slot: 17, seq: 110, offset_ms: 8 },
+          { slot: 18, seq: 111, offset_ms: -5 },
+          { slot: 19, seq: 112, offset_ms: 6 },
+          { slot: 20, seq: 113, offset_ms: -8 },
+          { slot: 21, seq: 114, offset_ms: 10 },
+          { slot: 22, seq: 115, offset_ms: -6 },
+          { slot: 23, seq: 116, offset_ms: 5 },
+          { slot: 24, seq: 117, offset_ms: 8 },
+          { slot: 25, seq: 118, offset_ms: -5 },
+          { slot: 26, seq: 119, offset_ms: 6 },
+          { slot: 27, seq: 120, offset_ms: -8 },
+          { slot: 28, seq: 121, offset_ms: 10 },
+          { slot: 29, seq: 122, offset_ms: -6 },
+          { slot: 30, seq: 123, offset_ms: 5 },
+          { slot: 31, seq: 124, offset_ms: 8 },
+        ],
+        missed_slots: [1, 3, 5, 7, 9, 11, 13, 15], // All offbeats in bars 1-2
+        extra_seqs: [],
+      },
+      { total_slots: 32 }
+    );
+
+    const obj = resolveTeachingObjective(analysis, "GRID_COMPLETE", baseFlags());
+    expect(obj).toBe("FIX_REPEATABLE_SLOT_ERRORS");
+  });
+
+  it("H2: downbeat hotspot => FIX_REPEATABLE_SLOT_ERRORS", () => {
+    // 4 bars (32 slots): miss only downbeats in bars 1 & 2 (slots 0,2,4,6,8,10,12,14)
+    // hit_rate = 24/32 = 0.75 (passes coverage check)
+    // 100% of misses are downbeats → clear hotspot
+    const analysis = analysisWithAlignment(
+      { hit_rate: 0.75, drift_ms_per_bar: 5, stability: 0.75 },
+      {
+        matched: [
+          // All offbeats hit in bars 1-2
+          { slot: 1, seq: 201, offset_ms: 8 },
+          { slot: 3, seq: 202, offset_ms: -5 },
+          { slot: 5, seq: 203, offset_ms: 6 },
+          { slot: 7, seq: 204, offset_ms: -8 },
+          { slot: 9, seq: 205, offset_ms: 10 },
+          { slot: 11, seq: 206, offset_ms: -6 },
+          { slot: 13, seq: 207, offset_ms: 5 },
+          { slot: 15, seq: 208, offset_ms: -4 },
+          // Bars 3-4: all slots hit
+          { slot: 16, seq: 209, offset_ms: 5 },
+          { slot: 17, seq: 210, offset_ms: 8 },
+          { slot: 18, seq: 211, offset_ms: -5 },
+          { slot: 19, seq: 212, offset_ms: 6 },
+          { slot: 20, seq: 213, offset_ms: -8 },
+          { slot: 21, seq: 214, offset_ms: 10 },
+          { slot: 22, seq: 215, offset_ms: -6 },
+          { slot: 23, seq: 216, offset_ms: 5 },
+          { slot: 24, seq: 217, offset_ms: 8 },
+          { slot: 25, seq: 218, offset_ms: -5 },
+          { slot: 26, seq: 219, offset_ms: 6 },
+          { slot: 27, seq: 220, offset_ms: -8 },
+          { slot: 28, seq: 221, offset_ms: 10 },
+          { slot: 29, seq: 222, offset_ms: -6 },
+          { slot: 30, seq: 223, offset_ms: 5 },
+          { slot: 31, seq: 224, offset_ms: 8 },
+        ],
+        missed_slots: [0, 2, 4, 6, 8, 10, 12, 14], // All downbeats in bars 1-2
+        extra_seqs: [],
+      },
+      { total_slots: 32 }
+    );
+
+    const obj = resolveTeachingObjective(analysis, "GRID_COMPLETE", baseFlags());
+    expect(obj).toBe("FIX_REPEATABLE_SLOT_ERRORS");
+  });
+
+  it("H3: no hotspot (random misses) => falls back to ladder", () => {
+    // Random misses: 2, 6, 9, 13 (2 offbeats, 2 downbeats - no pattern)
+    const analysis = analysisWithAlignment(
+      { hit_rate: 0.75, drift_ms_per_bar: 12, stability: 0.68, p90_abs_offset_ms: 48 },
+      {
+        matched: [
+          { slot: 0, seq: 301, offset_ms: 5 },
+          { slot: 1, seq: 302, offset_ms: -8 },
+          { slot: 3, seq: 303, offset_ms: 12 },
+          { slot: 4, seq: 304, offset_ms: -6 },
+          { slot: 5, seq: 305, offset_ms: 10 },
+          { slot: 7, seq: 306, offset_ms: -15 },
+          { slot: 8, seq: 307, offset_ms: 8 },
+          { slot: 10, seq: 308, offset_ms: -10 },
+          { slot: 11, seq: 309, offset_ms: 14 },
+          { slot: 12, seq: 310, offset_ms: -5 },
+          { slot: 14, seq: 311, offset_ms: 6 },
+          { slot: 15, seq: 312, offset_ms: -12 },
+        ],
+        missed_slots: [2, 6, 9, 13],
+        extra_seqs: [],
+      },
+      { total_slots: 16 }
+    );
+
+    const obj = resolveTeachingObjective(analysis, "GRID_COMPLETE", baseFlags());
+    // No hotspot detected, falls back to stability/spread-based coaching
+    expect(obj).toBe("TIGHTEN_SUBDIVISION");
+  });
+
+  it("H4: hotspot + drift => drift dominates (ANCHOR_BACKBEAT)", () => {
+    // 4 bars (32 slots): offbeat hotspot exists, BUT drift > 30ms/bar dominates
+    // hit_rate = 24/32 = 0.75 (passes coverage check)
+    const analysis = analysisWithAlignment(
+      { hit_rate: 0.75, drift_ms_per_bar: 45, stability: 0.6, p90_abs_offset_ms: 55 },
+      {
+        matched: [
+          // Downbeats hit with increasing drift
+          { slot: 0, seq: 401, offset_ms: 15 },
+          { slot: 2, seq: 402, offset_ms: 22 },
+          { slot: 4, seq: 403, offset_ms: 30 },
+          { slot: 6, seq: 404, offset_ms: 38 },
+          { slot: 8, seq: 405, offset_ms: 45 },
+          { slot: 10, seq: 406, offset_ms: 52 },
+          { slot: 12, seq: 407, offset_ms: 60 },
+          { slot: 14, seq: 408, offset_ms: 68 },
+          // Bars 3-4: all slots hit
+          { slot: 16, seq: 409, offset_ms: 75 },
+          { slot: 17, seq: 410, offset_ms: 78 },
+          { slot: 18, seq: 411, offset_ms: 80 },
+          { slot: 19, seq: 412, offset_ms: 82 },
+          { slot: 20, seq: 413, offset_ms: 85 },
+          { slot: 21, seq: 414, offset_ms: 88 },
+          { slot: 22, seq: 415, offset_ms: 90 },
+          { slot: 23, seq: 416, offset_ms: 92 },
+          { slot: 24, seq: 417, offset_ms: 95 },
+          { slot: 25, seq: 418, offset_ms: 98 },
+          { slot: 26, seq: 419, offset_ms: 100 },
+          { slot: 27, seq: 420, offset_ms: 102 },
+          { slot: 28, seq: 421, offset_ms: 105 },
+          { slot: 29, seq: 422, offset_ms: 108 },
+          { slot: 30, seq: 423, offset_ms: 110 },
+          { slot: 31, seq: 424, offset_ms: 112 },
+        ],
+        missed_slots: [1, 3, 5, 7, 9, 11, 13, 15], // All offbeats in bars 1-2
+        extra_seqs: [],
+      },
+      { total_slots: 32 }
+    );
+
+    const obj = resolveTeachingObjective(analysis, "GRID_COMPLETE", baseFlags());
+    // Drift dominates hotspot
+    expect(obj).toBe("ANCHOR_BACKBEAT");
   });
 });
