@@ -1,7 +1,7 @@
 {
   "objective": "FIX_REPEATABLE_SLOT_ERRORS",
-  "intent": "subdivision_support",
-  "cue_key": "add_subdivision_pulse",
+  "intent": "timing_centering",
+  "cue_key": "aim_center_of_click",
   "analysis_confidence": 0.916,
   "gradeability": "HIGH",
   "suppressed": false,

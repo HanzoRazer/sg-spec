@@ -92,8 +92,8 @@
     "modalitiesAvailable": ["haptic", "visual", "audio"]
   },
   "expected": {
-    "intent": "subdivision_support",
-    "cue_key": "add_subdivision_pulse",
-    "comment": "Downbeat hotspot (slots 0,8) → FIX_REPEATABLE_SLOT_ERRORS; runner uses objectiveToIntent() so intent stays subdivision_support"
+    "intent": "timing_centering",
+    "cue_key": "aim_center_of_click",
+    "comment": "Downbeat hotspot (slots 0,8) → FIX_REPEATABLE_SLOT_ERRORS → objectiveToIntentWithHotspot(downbeats) → timing_centering"
   }
 }

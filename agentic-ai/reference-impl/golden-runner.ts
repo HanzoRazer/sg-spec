@@ -26,8 +26,12 @@ import {
 import {
   resolveTeachingObjective,
   objectiveToIntent,
+  objectiveToIntentWithHotspot,
+  classifyHotspotKind,
   type TeachingObjective,
 } from "./objective-resolver";
+
+import { computeHotspotSignals } from "./hotspot-signals";
 
 import {
   bindCue,
@@ -332,7 +336,29 @@ export function runGoldenPath(
     finalize_reason,
     segmenterFlags
   );
-  const intent = objectiveToIntent(objective);
+
+  // Derive intent with hotspot context for FIX_REPEATABLE_SLOT_ERRORS only
+  let intent: CoachIntent;
+  if (objective === "FIX_REPEATABLE_SLOT_ERRORS" && takeAnalysis.alignment && takeAnalysis.grid) {
+    // Keep this aligned with resolver assumptions: 4/4 + 8n => 8 slots/bar.
+    const musicalBars = Math.max(1, takeAnalysis.grid.total_slots / 8);
+
+    const signals = computeHotspotSignals({
+      musicalBars,
+      grid: {
+        total_slots: takeAnalysis.grid.total_slots,
+        expected_slots: takeAnalysis.grid.expected_slots,
+      },
+      alignment: {
+        missed_slots: takeAnalysis.alignment.missed_slots,
+      },
+    });
+
+    const hotspotKind = classifyHotspotKind(signals); // "downbeats" | "offbeats" | null
+    intent = objectiveToIntentWithHotspot(objective, hotspotKind);
+  } else {
+    intent = objectiveToIntent(objective);
+  }
 
   // Get diagnostics (confidence, gradeability, suppression) from existing resolver
   const resolution = resolveWithDiagnostics(
