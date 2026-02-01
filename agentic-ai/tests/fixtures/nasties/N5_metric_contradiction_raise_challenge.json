@@ -20,7 +20,7 @@
       "mean_offset_ms": 2,
       "median_offset_ms": 1,
       "std_offset_ms": 10,
-      "p90_abs_offset_ms": 46,
+      "p90_abs_offset_ms": 42,
       "drift_ms_per_bar": 5,
       "stability": 0.2
     },
@@ -330,6 +330,6 @@
     "intent": "subdivision_support",
     "cue_key": "add_subdivision_pulse",
     "shouldInitiate": true,
-    "note": "stability=0.2 < 0.70 blocks raise_challenge; p90=46 > 45 triggers timingSpreadProblem -> subdivision_support"
+    "note": "stability=0.2 < 0.70 triggers stabilityProblem() -> subdivision_support (true stability-only routing)"
   }
 }

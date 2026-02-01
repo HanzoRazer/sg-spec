@@ -25,8 +25,8 @@ describe("stability gate for raise_challenge", () => {
     expect(result.cue_key).toBe("nice_lock_in_bump_tempo");
   });
 
-  it("G1b: stability < 0.70 blocks raise_challenge -> subdivision_support", () => {
-    const input = loadFixture("./fixtures/golden/G1b_pass_without_stability.json");
+  it("G1b: stability < 0.70 blocks raise_challenge -> subdivision_support (stability-only)", () => {
+    const input = loadFixture("./fixtures/golden/G1b_stability_only_blocks_pass.json");
     const result = runGoldenPath(input, { validateInput: true, validateOutput: true });
 
     expect(result.intent).toBe("subdivision_support");
@@ -49,12 +49,11 @@ describe("stability gate boundary cases", () => {
     expect(result.intent).toBe("raise_challenge");
   });
 
-  it("stability 0.69 should fail isPass", () => {
+  it("stability 0.69 should fail isPass and route via stabilityProblem()", () => {
     const input = loadFixture("./fixtures/golden/G1a_pass_with_stability.json");
     // Set stability just below threshold
     input.takeAnalysis.metrics.stability = 0.69;
-    // Also need p90 > 45 to trigger timingSpreadProblem (otherwise falls to repeat_once)
-    input.takeAnalysis.metrics.p90_abs_offset_ms = 46;
+    // p90 stays at 42 (passing) - stability-only routing via stabilityProblem()
     const result = runGoldenPath(input, { validateInput: true, validateOutput: true });
 
     expect(result.intent).toBe("subdivision_support");

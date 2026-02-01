@@ -1,5 +1,5 @@
 {
-  "id": "G1b_pass_without_stability",
+  "id": "G1b_stability_only_blocks_pass",
   "now_ms": 2000000,
   "musical": {
     "bpm": 80,
@@ -12,7 +12,7 @@
   "takeAnalysis": {
     "type": "TakeAnalysis",
     "exercise_id": "2bar_eighth_down",
-    "take_id": "take_G1b",
+    "take_id": "take_G1b_stability_only",
     "metrics": {
       "hit_rate": 0.86,
       "miss_rate": 0.14,
@@ -20,7 +20,7 @@
       "mean_offset_ms": 2,
       "median_offset_ms": 1,
       "std_offset_ms": 10,
-      "p90_abs_offset_ms": 46,
+      "p90_abs_offset_ms": 42,
       "drift_ms_per_bar": 5,
       "stability": 0.65
     },
@@ -79,6 +79,6 @@
     "intent": "subdivision_support",
     "cue_key": "add_subdivision_pulse",
     "shouldInitiate": true,
-    "comment": "stability=0.65 < 0.70 blocks raise_challenge, p90=46 > 45 triggers timingSpreadProblem -> subdivision_support"
+    "comment": "stability=0.65 < 0.70 triggers stabilityProblem; p90=42 passes so this is true stability-only routing"
   }
 }

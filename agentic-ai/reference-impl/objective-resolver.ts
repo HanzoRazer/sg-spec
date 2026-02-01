@@ -177,6 +177,10 @@ function timingSpreadProblem(m: TakeMetrics): boolean {
   return m.p90_abs_offset_ms > PASS.p90;
 }
 
+function stabilityProblem(m: TakeMetrics): boolean {
+  return m.stability < PASS_STABILITY;
+}
+
 // ============================================================================
 // Main Resolver
 // ============================================================================
@@ -222,6 +226,7 @@ export function resolveTeachingObjective(
   if (extraProblem(m)) return "REDUCE_MOTION";
   if (driftProblem(m)) return "BACKBEAT_ANCHORING";
   if (biasProblem(m)) return "TIMING_CENTERING";
+  if (stabilityProblem(m)) return "SUBDIVISION_INTERNALIZE";
   if (timingSpreadProblem(m)) return "SUBDIVISION_INTERNALIZE";
 
   // Fallback

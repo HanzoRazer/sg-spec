@@ -195,6 +195,10 @@ export function extraProblem(m: TakeMetrics): boolean {
   return m.extra_rate > EXTRA_BAD;
 }
 
+export function stabilityProblem(m: TakeMetrics): boolean {
+  return m.stability < PASS_STABILITY;
+}
+
 // ============================================================================
 // Main router: TakeAnalysis + flags → CoachIntent
 // ============================================================================
@@ -244,6 +248,7 @@ export function resolveCoachIntent(
   if (extraProblem(m)) return "reduce_motion";
   if (driftProblem(m)) return "backbeat_anchor";
   if (biasProblem(m)) return "timing_centering";
+  if (stabilityProblem(m)) return "subdivision_support";
   if (timingSpreadProblem(m)) return "subdivision_support";
 
   return "repeat_once";

@@ -233,15 +233,15 @@ describe("objective-resolver", () => {
       expectedIntent: "slow_down_enable_pulse",
     },
     {
-      id: "N5-like: low stability blocks raise_challenge => SUBDIVISION_INTERNALIZE (p90>45)",
+      id: "N5-like: low stability routes via stabilityProblem() => SUBDIVISION_INTERNALIZE",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags(),
       analysis: analysisWithMetrics({
         hit_rate: 0.90,
         miss_rate: 0.10,
         extra_rate: 0.05,
-        p90_abs_offset_ms: 46, // > PASS.p90 triggers timingSpreadProblem
-        stability: 0.2, // < PASS_STABILITY (0.70) blocks isPass()
+        p90_abs_offset_ms: 40, // Passing - true stability-only routing
+        stability: 0.2, // < PASS_STABILITY (0.70) triggers stabilityProblem()
       }),
       expectedObjective: "SUBDIVISION_INTERNALIZE",
       expectedIntent: "subdivision_support",
