@@ -209,13 +209,13 @@ describe("objective-resolver (12-case table)", () => {
       expectedIntent: "slow_down_enable_pulse",
     },
 
-    // M2: driftProblem (|drift| > 30) -> ANCHOR_BACKBEAT (feel 2 & 4)
+    // M2: driftProblem (|drift| > 30) -> STABILIZE_TEMPO_DRIFT (feel 2 & 4)
     {
-      id: "M2: drift_problem => ANCHOR_BACKBEAT",
+      id: "M2: drift_problem => STABILIZE_TEMPO_DRIFT",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags(),
       analysis: analysisWithMetrics({ hit_rate: 0.82, p90_abs_offset_ms: 44, extra_rate: 0.05, drift_ms_per_bar: -45, stability: 0.75 }),
-      expectedObjective: "ANCHOR_BACKBEAT",
+      expectedObjective: "STABILIZE_TEMPO_DRIFT",
       expectedIntent: "backbeat_anchor",
     },
 
@@ -265,7 +265,7 @@ describe("objectiveToIntent exhaustiveness", () => {
     "MATCH_EXERCISE_LENGTH",
     // Musical-performance (5)
     "TIGHTEN_SUBDIVISION",
-    "ANCHOR_BACKBEAT",
+    "STABILIZE_TEMPO_DRIFT",
     "REDUCE_EXTRA_MOTION",
     "CENTER_TIMING_BIAS",
     "ADVANCE_DIFFICULTY",
@@ -483,7 +483,7 @@ describe("hotspot detection (refined 2-bar algorithm)", () => {
     expect(obj).toBe("TIGHTEN_SUBDIVISION");
   });
 
-  it("H4: hotspot + drift => drift dominates (ANCHOR_BACKBEAT)", () => {
+  it("H4: hotspot + drift => drift dominates (STABILIZE_TEMPO_DRIFT)", () => {
     // 2 bars (16 slots): offbeat hotspot exists (slots 1,9), BUT drift > 30ms/bar dominates
     // hit_rate = 14/16 = 0.875 (passes coverage check)
     const analysis = analysisWithAlignment(
@@ -513,6 +513,6 @@ describe("hotspot detection (refined 2-bar algorithm)", () => {
 
     const obj = resolveTeachingObjective(analysis, "GRID_COMPLETE", baseFlags());
     // Drift dominates hotspot
-    expect(obj).toBe("ANCHOR_BACKBEAT");
+    expect(obj).toBe("STABILIZE_TEMPO_DRIFT");
   });
 });

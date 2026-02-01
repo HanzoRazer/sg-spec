@@ -96,7 +96,7 @@ export type TeachingObjective =
 
   // === Musical-performance objectives (fix playing) ===
   | "TIGHTEN_SUBDIVISION" // timing spread / stability weak: add subdivision support
-  | "ANCHOR_BACKBEAT" // drift: feel 2 & 4
+  | "STABILIZE_TEMPO_DRIFT" // drift: feel 2 & 4, anchor backbeat
   | "REDUCE_EXTRA_MOTION" // too many extra events: simplify / smaller motion
   | "CENTER_TIMING_BIAS" // systematic early/late: aim center
   | "ADVANCE_DIFFICULTY" // pass: increase tempo / challenge
@@ -130,7 +130,7 @@ export function objectiveToIntent(obj: TeachingObjective): CoachIntent {
     // Musical
     case "TIGHTEN_SUBDIVISION":
       return "subdivision_support";
-    case "ANCHOR_BACKBEAT":
+    case "STABILIZE_TEMPO_DRIFT":
       return "backbeat_anchor";
     case "REDUCE_EXTRA_MOTION":
       return "reduce_motion";
@@ -206,7 +206,7 @@ export function intentToObjective(intent: CoachIntent): TeachingObjective {
     case "subdivision_support":
       return "TIGHTEN_SUBDIVISION";
     case "backbeat_anchor":
-      return "ANCHOR_BACKBEAT";
+      return "STABILIZE_TEMPO_DRIFT";
     case "reduce_motion":
       return "REDUCE_EXTRA_MOTION";
     case "timing_centering":
@@ -290,12 +290,12 @@ function stabilityProblem(m: TakeMetrics): boolean {
  * 2) Mechanical take-quality issues (suppress musical coaching)
  * 2b) Low-confidence storm → metrics unreliable, recover safely
  * 3) Musical coaching ordered by "most corrective" first:
- *    - pass+stable → advance
  *    - coverage < 75% → slow down
  *    - extra > 15% → reduce motion
- *    - drift > 30ms/bar → anchor backbeat
+ *    - drift > 30ms/bar → stabilize tempo drift (dominates hotspot)
+ *    - hotspot detected → FIX_REPEATABLE_SLOT_ERRORS (before pass!)
+ *    - pass+stable → advance
  *    - bias > 20ms → center timing
- *    - hotspot detected → FIX_REPEATABLE_SLOT_ERRORS
  *    - stability < 70% → subdivision support
  *    - spread > 45ms p90 → subdivision support
  *    - fallback → recover
@@ -328,15 +328,13 @@ export function resolveTeachingObjective(
   // === 3) Musical coaching (ordered by severity) ===
   const m = analysis.metrics;
 
-  if (isPassWithStability(m)) return "ADVANCE_DIFFICULTY";
   // Coverage problem semantically needs tempo correction (slow_down_enable_pulse)
   if (coverageProblem(m)) return "MATCH_TARGET_TEMPO";
   if (extraProblem(m)) return "REDUCE_EXTRA_MOTION";
-  if (driftProblem(m)) return "ANCHOR_BACKBEAT"; // Drift dominates hotspot
-  if (biasProblem(m)) return "CENTER_TIMING_BIAS";
+  if (driftProblem(m)) return "STABILIZE_TEMPO_DRIFT"; // Drift dominates hotspot
 
-  // === 3b) Hotspot detection (after bias, before stability) ===
-  // If alignment data is available, check for repeatable slot errors
+  // === 3a) Hotspot detection (after drift, before pass) ===
+  // Even if metrics look good, address repeatable slot errors before advancing
   if (analysis.alignment && analysis.grid) {
     const musicalBars = analysis.grid.total_slots / 8; // Assume 8 slots/bar for 4/4 + 8n
     const signals = computeHotspotSignals({
@@ -353,6 +351,9 @@ export function resolveTeachingObjective(
       return "FIX_REPEATABLE_SLOT_ERRORS";
     }
   }
+
+  if (isPassWithStability(m)) return "ADVANCE_DIFFICULTY";
+  if (biasProblem(m)) return "CENTER_TIMING_BIAS";
 
   // Stability-only gap fix:
   // If "pass" failed only on stability (and nothing else is severe), teach subdivision support

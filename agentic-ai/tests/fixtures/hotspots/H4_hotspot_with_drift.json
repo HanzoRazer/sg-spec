@@ -1,6 +1,6 @@
 {
   "id": "H4_hotspot_with_drift",
-  "description": "Offbeat hotspot exists BUT drift > 30ms/bar -> drift dominates, ANCHOR_BACKBEAT takes priority",
+  "description": "Offbeat hotspot exists BUT drift > 30ms/bar -> drift dominates, STABILIZE_TEMPO_DRIFT takes priority",
   "now_ms": 1015000,
   "musical": {
     "bpm": 80,
@@ -86,7 +86,7 @@
     "modalitiesAvailable": ["haptic", "visual"]
   },
   "expected": {
-    "objective": "ANCHOR_BACKBEAT",
+    "objective": "STABILIZE_TEMPO_DRIFT",
     "intent": "backbeat_anchor",
     "cue_key": "feel_two_and_four",
     "hotspot_kind": "offbeats",
