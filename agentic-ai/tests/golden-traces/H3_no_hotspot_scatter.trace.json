@@ -1,7 +1,7 @@
 {
-  "objective": "RECOVER_TAKE",
-  "intent": "repeat_once",
-  "cue_key": "one_more_take_same_tempo",
+  "objective": "TIGHTEN_SUBDIVISION",
+  "intent": "subdivision_support",
+  "cue_key": "add_subdivision_pulse",
   "analysis_confidence": 0.927,
   "gradeability": "HIGH",
   "suppressed": false,
@@ -9,7 +9,7 @@
     "shouldInitiate": false,
     "reason": "budget_or_cooldown",
     "mode": "PRACTICE",
-    "backoff": "L1",
+    "backoff": "L0",
     "modality": null
   },
   "renderer": null,

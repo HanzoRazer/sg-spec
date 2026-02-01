@@ -70,7 +70,7 @@
   "finalize_reason": "GRID_COMPLETE",
   "userSignals": {
     "mode": "PRACTICE",
-    "backoff": "L1",
+    "backoff": "L0",
     "nowMs": 3000000,
     "timeSinceLastNoteOnMs": 1400,
     "phraseBoundaryDetected": true,
@@ -339,6 +339,7 @@
   "expected": {
     "objective": "FIX_REPEATABLE_SLOT_ERRORS",
     "intent": "subdivision_support",
-    "cue_key": "add_subdivision_pulse"
+    "cue_key": "add_subdivision_pulse",
+    "comment": "Hotspot detected (offbeats) -> FIX_REPEATABLE_SLOT_ERRORS -> objectiveToIntent -> subdivision_support"
   }
 }

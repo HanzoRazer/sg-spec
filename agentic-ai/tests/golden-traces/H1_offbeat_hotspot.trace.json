@@ -9,7 +9,7 @@
     "shouldInitiate": false,
     "reason": "budget_or_cooldown",
     "mode": "PRACTICE",
-    "backoff": "L1",
+    "backoff": "L0",
     "modality": null
   },
   "renderer": null,

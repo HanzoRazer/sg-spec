@@ -70,7 +70,7 @@
   "finalize_reason": "GRID_COMPLETE",
   "userSignals": {
     "mode": "PRACTICE",
-    "backoff": "L1",
+    "backoff": "L0",
     "nowMs": 3030000,
     "timeSinceLastNoteOnMs": 1400,
     "phraseBoundaryDetected": true,
@@ -339,6 +339,7 @@
   "expected": {
     "objective": "STABILIZE_TEMPO_DRIFT",
     "intent": "backbeat_anchor",
-    "cue_key": "emphasize_2_and_4"
+    "cue_key": "emphasize_2_and_4",
+    "comment": "Drift > 30ms/bar dominates hotspot -> STABILIZE_TEMPO_DRIFT -> backbeat_anchor"
   }
 }

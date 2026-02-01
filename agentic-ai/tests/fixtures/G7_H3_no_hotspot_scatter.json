@@ -21,9 +21,9 @@
       "mean_offset_ms": 1,
       "median_offset_ms": 0,
       "std_offset_ms": 13,
-      "p90_abs_offset_ms": 44,
+      "p90_abs_offset_ms": 46,
       "drift_ms_per_bar": 10,
-      "stability": 0.72
+      "stability": 0.60
     },
     "grid": {
       "grid_start_ms": 3021500,
@@ -68,7 +68,7 @@
   "finalize_reason": "GRID_COMPLETE",
   "userSignals": {
     "mode": "PRACTICE",
-    "backoff": "L1",
+    "backoff": "L0",
     "nowMs": 3020000,
     "timeSinceLastNoteOnMs": 1400,
     "phraseBoundaryDetected": true,
@@ -336,7 +336,9 @@
   },
   "expected": {
     "objectiveNot": "FIX_REPEATABLE_SLOT_ERRORS",
-    "intent": "repeat_once",
-    "cue_key": "one_more_take_same_tempo"
+    "objective": "TIGHTEN_SUBDIVISION",
+    "intent": "subdivision_support",
+    "cue_key": "add_subdivision_pulse",
+    "comment": "No hotspot; p90=46>45 and stability=0.60<0.70 -> TIGHTEN_SUBDIVISION -> subdivision_support"
   }
 }
