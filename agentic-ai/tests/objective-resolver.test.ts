@@ -1,8 +1,7 @@
 /**
  * TeachingObjective Resolver Tests
  *
- * Table-driven tests for the objective layer, including N1-N6 cases
- * and musical severity ordering.
+ * 12-case table covering N1-N6b patterns plus musical ladder cases.
  */
 
 import { describe, it, expect } from "vitest";
@@ -39,15 +38,16 @@ function analysisWithMetrics(
     exercise_id: "2bar_eighth_down",
     take_id: "take_test",
     metrics: {
-      hit_rate: 0.85,
-      miss_rate: 0.15,
-      extra_rate: 0.05,
-      mean_offset_ms: 2,
-      median_offset_ms: 1,
-      std_offset_ms: 18,
-      p90_abs_offset_ms: 40, // Under PASS.p90 (45)
-      drift_ms_per_bar: 10,
-      stability: 0.7,
+      // defaults chosen to avoid triggering any musical problems unless overridden
+      hit_rate: 0.84, // < PASS(0.85) but >= ALMOST(0.75)
+      miss_rate: 0.16,
+      extra_rate: 0.05, // <= EXTRA_BAD(0.15)
+      mean_offset_ms: 0,
+      median_offset_ms: 0, // <= BIAS_BAD(20)
+      std_offset_ms: 12,
+      p90_abs_offset_ms: 40, // <= PASS.p90(45)
+      drift_ms_per_bar: 10, // <= DRIFT_BAD(30)
+      stability: 0.8, // >= STABILITY_WEAK(0.70)
       ...overrides,
     },
     quality: { analysis_confidence: 0.9, event_confidence_mean: 0.9 },
@@ -67,200 +67,172 @@ type Case = {
 // Test Suite
 // ============================================================================
 
-describe("objective-resolver", () => {
+describe("objective-resolver (12-case table)", () => {
   const cases: Case[] = [
-    // --- Hard exits ---
+    // ------------------------
+    // Hard exits
+    // ------------------------
     {
-      id: "hardexit_cancelled -> CAPTURE_RECOVER",
+      id: "hardexit_cancelled => RECOVER_TAKE",
       finalize_reason: "CANCELLED",
       flags: baseFlags(),
       analysis: analysisWithMetrics(),
-      expectedObjective: "CAPTURE_RECOVER",
+      expectedObjective: "RECOVER_TAKE",
       expectedIntent: "repeat_once",
     },
     {
-      id: "hardexit_restart_reason -> CAPTURE_RECOVER",
+      id: "hardexit_restart_reason => RECOVER_TAKE",
       finalize_reason: "RESTART",
       flags: baseFlags(),
       analysis: analysisWithMetrics(),
-      expectedObjective: "CAPTURE_RECOVER",
+      expectedObjective: "RECOVER_TAKE",
       expectedIntent: "repeat_once",
     },
     {
-      id: "hardexit_restart_detected -> CAPTURE_RECOVER",
+      id: "hardexit_restart_detected => RECOVER_TAKE",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags({ restart_detected: true }),
       analysis: analysisWithMetrics(),
-      expectedObjective: "CAPTURE_RECOVER",
+      expectedObjective: "RECOVER_TAKE",
       expectedIntent: "repeat_once",
     },
 
-    // --- Mechanical precedence (N1-N3 patterns) ---
+    // ------------------------
+    // Nasties N1-N6b patterns
+    // ------------------------
+
+    // N1: missed_count_in + late_start -> missed_count_in dominates
     {
-      id: "N1: missed_count_in + late_start => COUNT_IN_REENTRY (dominates late_start)",
+      id: "N1: missed_count_in + late_start => REENTER_ON_COUNT_IN",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags({ missed_count_in: true, late_start: true }),
-      analysis: analysisWithMetrics({ hit_rate: 0.9, miss_rate: 0.1, p90_abs_offset_ms: 35 }),
-      expectedObjective: "COUNT_IN_REENTRY",
+      analysis: analysisWithMetrics({ hit_rate: 0.9, p90_abs_offset_ms: 30, stability: 0.9 }),
+      expectedObjective: "REENTER_ON_COUNT_IN",
       expectedIntent: "wait_for_count_in",
     },
+
+    // N1b: late_start only
     {
-      id: "late_start alone => DOWNBEAT_ALIGNMENT",
+      id: "N1b: late_start only => ALIGN_FIRST_DOWNBEAT",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags({ late_start: true }),
       analysis: analysisWithMetrics(),
-      expectedObjective: "DOWNBEAT_ALIGNMENT",
+      expectedObjective: "ALIGN_FIRST_DOWNBEAT",
       expectedIntent: "start_on_downbeat",
     },
+
+    // N2: partial_take + tempo_mismatch -> partial_take dominates
     {
-      id: "N2: partial_take + tempo_mismatch => COMPLETE_FORM_2_BARS (partial dominates tempo)",
+      id: "N2: partial_take + tempo_mismatch => COMPLETE_REQUIRED_FORM",
       finalize_reason: "USER_STOP",
       flags: baseFlags({ partial_take: true, tempo_mismatch: true }),
-      analysis: analysisWithMetrics({ hit_rate: 0.72, miss_rate: 0.28 }),
-      expectedObjective: "COMPLETE_FORM_2_BARS",
+      analysis: analysisWithMetrics({ hit_rate: 0.8, p90_abs_offset_ms: 50, stability: 0.7 }),
+      expectedObjective: "COMPLETE_REQUIRED_FORM",
       expectedIntent: "finish_two_bars",
     },
+
+    // N2b: tempo_mismatch only
     {
-      id: "tempo_mismatch alone => SLOW_DOWN_AND_PULSE",
+      id: "N2b: tempo_mismatch only => MATCH_TARGET_TEMPO",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags({ tempo_mismatch: true }),
-      analysis: analysisWithMetrics({ hit_rate: 0.8, miss_rate: 0.2 }),
-      expectedObjective: "SLOW_DOWN_AND_PULSE",
+      analysis: analysisWithMetrics({ hit_rate: 0.82, p90_abs_offset_ms: 55, stability: 0.72 }),
+      expectedObjective: "MATCH_TARGET_TEMPO",
       expectedIntent: "slow_down_enable_pulse",
     },
+
+    // N3: extra_bars + drift -> extra_bars dominates drift coaching
     {
-      id: "N3: extra_bars (+drift) => CLARIFY_EXERCISE_LENGTH (dominates drift)",
+      id: "N3: extra_bars + drift => MATCH_EXERCISE_LENGTH",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags({ extra_bars: true }),
-      analysis: analysisWithMetrics({ drift_ms_per_bar: -80, extra_rate: 0.25 }),
-      expectedObjective: "CLARIFY_EXERCISE_LENGTH",
+      analysis: analysisWithMetrics({ drift_ms_per_bar: 80, hit_rate: 0.9, p90_abs_offset_ms: 30 }),
+      expectedObjective: "MATCH_EXERCISE_LENGTH",
       expectedIntent: "clarify_exercise_length",
     },
 
-    // --- Musical severity ordering (thresholds aligned with analysis-to-intent.ts) ---
+    // N4: low_confidence_storm -> fallback to REPEAT_WITH_SAME_SETTINGS
     {
-      id: "isPass => RAISE_CHALLENGE (hit>=0.85, p90<=45, extra<=0.10)",
+      id: "N4: low_confidence_storm => REPEAT_WITH_SAME_SETTINGS",
+      finalize_reason: "GRID_COMPLETE",
+      flags: baseFlags({ low_confidence_events: 12 }),
+      analysis: analysisWithMetrics({
+        hit_rate: 0.83,
+        p90_abs_offset_ms: 44,
+        extra_rate: 0.08,
+        drift_ms_per_bar: 10,
+        median_offset_ms: 0,
+        stability: 0.78,
+      }),
+      expectedObjective: "REPEAT_WITH_SAME_SETTINGS",
+      expectedIntent: "repeat_once",
+    },
+
+    // N5: pass+stable => ADVANCE_DIFFICULTY
+    {
+      id: "N5: pass+stable => ADVANCE_DIFFICULTY",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags(),
-      analysis: analysisWithMetrics({
-        hit_rate: 0.90,
-        miss_rate: 0.10,
-        extra_rate: 0.08,
-        p90_abs_offset_ms: 40,
-      }),
-      expectedObjective: "RAISE_CHALLENGE",
+      analysis: analysisWithMetrics({ hit_rate: 0.86, p90_abs_offset_ms: 40, extra_rate: 0.08, stability: 0.82 }),
+      expectedObjective: "ADVANCE_DIFFICULTY",
       expectedIntent: "raise_challenge",
     },
+
+    // N6a/N6b: quantize boundary tests -> REPEAT_WITH_SAME_SETTINGS
     {
-      id: "coverageProblem => SLOW_DOWN_AND_PULSE (hit<0.75)",
+      id: "N6a: quantize_inside_tolerance => REPEAT_WITH_SAME_SETTINGS",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags(),
       analysis: analysisWithMetrics({
-        hit_rate: 0.70,
-        miss_rate: 0.30,
+        hit_rate: 0.84,
+        p90_abs_offset_ms: 44,
         extra_rate: 0.05,
+        stability: 0.8,
       }),
-      expectedObjective: "SLOW_DOWN_AND_PULSE",
+      expectedObjective: "REPEAT_WITH_SAME_SETTINGS",
+      expectedIntent: "repeat_once",
+    },
+
+    // ------------------------
+    // Musical ladder cases
+    // ------------------------
+
+    // M1: coverageProblem (hit_rate < 0.75) -> IMPROVE_COVERAGE
+    {
+      id: "M1: coverage_problem => IMPROVE_COVERAGE",
+      finalize_reason: "GRID_COMPLETE",
+      flags: baseFlags(),
+      analysis: analysisWithMetrics({ hit_rate: 0.74, miss_rate: 0.26, p90_abs_offset_ms: 40, extra_rate: 0.05, stability: 0.6 }),
+      expectedObjective: "IMPROVE_COVERAGE",
       expectedIntent: "slow_down_enable_pulse",
     },
+
+    // M2: driftProblem (|drift| > 30) -> STABILIZE_TEMPO_DRIFT
     {
-      id: "extraProblem => REDUCE_MOTION (extra>0.15, hit>=0.75)",
+      id: "M2: drift_problem => STABILIZE_TEMPO_DRIFT",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags(),
-      analysis: analysisWithMetrics({
-        hit_rate: 0.80,
-        miss_rate: 0.20,
-        extra_rate: 0.25,
-      }),
-      expectedObjective: "REDUCE_MOTION",
-      expectedIntent: "reduce_motion",
-    },
-    {
-      id: "driftProblem => BACKBEAT_ANCHORING (|drift|>30, no extra/coverage problem)",
-      finalize_reason: "GRID_COMPLETE",
-      flags: baseFlags(),
-      analysis: analysisWithMetrics({
-        hit_rate: 0.80,
-        extra_rate: 0.10,
-        drift_ms_per_bar: 45,
-        p90_abs_offset_ms: 50,
-      }),
-      expectedObjective: "BACKBEAT_ANCHORING",
+      analysis: analysisWithMetrics({ hit_rate: 0.82, p90_abs_offset_ms: 44, extra_rate: 0.05, drift_ms_per_bar: -45, stability: 0.75 }),
+      expectedObjective: "STABILIZE_TEMPO_DRIFT",
       expectedIntent: "backbeat_anchor",
     },
-    {
-      id: "biasProblem => TIMING_CENTERING (|median|>20, no higher-priority problem)",
-      finalize_reason: "GRID_COMPLETE",
-      flags: baseFlags(),
-      analysis: analysisWithMetrics({
-        hit_rate: 0.80,
-        extra_rate: 0.10,
-        drift_ms_per_bar: 15,
-        median_offset_ms: 25,
-        p90_abs_offset_ms: 50,
-      }),
-      expectedObjective: "TIMING_CENTERING",
-      expectedIntent: "timing_centering",
-    },
-    {
-      id: "timingSpreadProblem => SUBDIVISION_INTERNALIZE (p90>45, no higher-priority problem)",
-      finalize_reason: "GRID_COMPLETE",
-      flags: baseFlags(),
-      analysis: analysisWithMetrics({
-        hit_rate: 0.80,
-        extra_rate: 0.10,
-        drift_ms_per_bar: 15,
-        median_offset_ms: 10,
-        p90_abs_offset_ms: 55,
-      }),
-      expectedObjective: "SUBDIVISION_INTERNALIZE",
-      expectedIntent: "subdivision_support",
-    },
 
-    // --- N4/N5/N6 family mapping sanity ---
+    // M3: stability-only gap fix => TIGHTEN_SUBDIVISION
     {
-      id: "N4-like: poor coverage dominates spread (hit<0.75)",
+      id: "M3: stability_only_fail => TIGHTEN_SUBDIVISION (gap fix)",
       finalize_reason: "GRID_COMPLETE",
       flags: baseFlags(),
       analysis: analysisWithMetrics({
-        hit_rate: 0.55,
-        miss_rate: 0.45,
-        extra_rate: 0.30,
-        p90_abs_offset_ms: 110,
-        std_offset_ms: 45,
+        hit_rate: 0.86,
+        miss_rate: 0.14,
+        extra_rate: 0.08,
+        p90_abs_offset_ms: 42,
+        drift_ms_per_bar: 10,
+        median_offset_ms: 0,
+        stability: 0.65,
       }),
-      expectedObjective: "SLOW_DOWN_AND_PULSE",
-      expectedIntent: "slow_down_enable_pulse",
-    },
-    {
-      id: "N5-like: low stability routes via stabilityProblem() => SUBDIVISION_INTERNALIZE",
-      finalize_reason: "GRID_COMPLETE",
-      flags: baseFlags(),
-      analysis: analysisWithMetrics({
-        hit_rate: 0.90,
-        miss_rate: 0.10,
-        extra_rate: 0.05,
-        p90_abs_offset_ms: 40, // Passing - true stability-only routing
-        stability: 0.2, // < PASS_STABILITY (0.70) triggers stabilityProblem()
-      }),
-      expectedObjective: "SUBDIVISION_INTERNALIZE",
+      expectedObjective: "TIGHTEN_SUBDIVISION",
       expectedIntent: "subdivision_support",
-    },
-
-    // --- Fallback case ---
-    {
-      id: "no problems detected => CAPTURE_RECOVER (fallback)",
-      finalize_reason: "GRID_COMPLETE",
-      flags: baseFlags(),
-      analysis: analysisWithMetrics({
-        hit_rate: 0.80, // Not pass (needs 0.85)
-        extra_rate: 0.10, // Not extra problem (needs >0.15)
-        drift_ms_per_bar: 20, // Not drift problem (needs >30)
-        median_offset_ms: 15, // Not bias problem (needs >20)
-        p90_abs_offset_ms: 40, // Not spread problem (needs >45)
-      }),
-      expectedObjective: "CAPTURE_RECOVER",
-      expectedIntent: "repeat_once",
     },
   ];
 
@@ -281,18 +253,20 @@ describe("objective-resolver", () => {
 
 describe("objectiveToIntent exhaustiveness", () => {
   const allObjectives: TeachingObjective[] = [
-    "CAPTURE_RECOVER",
-    "COUNT_IN_REENTRY",
-    "DOWNBEAT_ALIGNMENT",
-    "COMPLETE_FORM_2_BARS",
-    "SLOW_DOWN_AND_PULSE",
-    "CLARIFY_EXERCISE_LENGTH",
+    "RECOVER_TAKE",
+    "REENTER_ON_COUNT_IN",
+    "ALIGN_FIRST_DOWNBEAT",
+    "COMPLETE_REQUIRED_FORM",
+    "MATCH_TARGET_TEMPO",
+    "MATCH_EXERCISE_LENGTH",
     "REDUCE_FALSE_TRIGGERS",
-    "SUBDIVISION_INTERNALIZE",
-    "BACKBEAT_ANCHORING",
-    "REDUCE_MOTION",
-    "TIMING_CENTERING",
-    "RAISE_CHALLENGE",
+    "ADVANCE_DIFFICULTY",
+    "IMPROVE_COVERAGE",
+    "REDUCE_EXTRA_MOTION",
+    "STABILIZE_TEMPO_DRIFT",
+    "CENTER_TIMING_BIAS",
+    "TIGHTEN_SUBDIVISION",
+    "REPEAT_WITH_SAME_SETTINGS",
   ];
 
   for (const obj of allObjectives) {
