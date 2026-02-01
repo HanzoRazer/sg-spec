@@ -5,18 +5,12 @@
   "gradeability": "LOW",
   "suppressed": true,
   "guidance": {
-    "shouldInitiate": true,
-    "reason": "ok",
+    "shouldInitiate": false,
+    "reason": "insufficient_pause",
     "mode": "PRACTICE",
     "backoff": "L2",
-    "modality": "haptic"
+    "modality": null
   },
-  "renderer": {
-    "type": "RendererEnvelope",
-    "payload_type": "TextPromptPayload",
-    "pulse_type": null,
-    "deliver_at_ms": 1009200,
-    "selected_modality": "haptic"
-  },
+  "renderer": null,
   "pulses": null
 }

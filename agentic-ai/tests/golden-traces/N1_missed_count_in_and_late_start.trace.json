@@ -1,22 +1,22 @@
 {
-  "intent": "clarify_exercise_length",
-  "cue_key": "stop_after_two_bars",
-  "analysis_confidence": 0.52,
-  "gradeability": "LOW",
+  "intent": "wait_for_count_in",
+  "cue_key": "wait_for_count_in_then_enter",
+  "analysis_confidence": 0.619,
+  "gradeability": "OK",
   "suppressed": true,
   "guidance": {
     "shouldInitiate": true,
     "reason": "ok",
     "mode": "PRACTICE",
     "backoff": "L1",
-    "modality": "haptic"
+    "modality": "visual"
   },
   "renderer": {
     "type": "RendererEnvelope",
     "payload_type": "TextPromptPayload",
     "pulse_type": null,
-    "deliver_at_ms": 1012500,
-    "selected_modality": "haptic"
+    "deliver_at_ms": 1010000,
+    "selected_modality": "visual"
   },
   "pulses": null
 }

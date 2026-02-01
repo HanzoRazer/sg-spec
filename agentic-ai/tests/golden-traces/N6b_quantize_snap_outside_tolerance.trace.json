@@ -1,16 +1,154 @@
 {
-  "intent": "repeat_once",
-  "cue_key": "one_more_take_same_tempo",
-  "analysis_confidence": 0.907,
+  "intent": "subdivision_support",
+  "cue_key": "add_subdivision_pulse",
+  "analysis_confidence": 0.91,
   "gradeability": "HIGH",
   "suppressed": false,
   "guidance": {
-    "shouldInitiate": false,
-    "reason": "insufficient_pause",
+    "shouldInitiate": true,
+    "reason": "ok",
     "mode": "PRACTICE",
-    "backoff": "L0",
-    "modality": null
+    "backoff": "L1",
+    "modality": "haptic"
   },
-  "renderer": null,
-  "pulses": null
+  "renderer": {
+    "type": "RendererEnvelope",
+    "payload_type": "PulsePayload",
+    "pulse_type": "subdivision",
+    "deliver_at_ms": 1001581,
+    "selected_modality": "haptic"
+  },
+  "pulses": {
+    "count": 16,
+    "first_12": [
+      {
+        "time_ms": 1003081,
+        "slot_index_in_bar": 0,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.486
+      },
+      {
+        "time_ms": 1003456,
+        "slot_index_in_bar": 1,
+        "bar_index": 0,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1003831,
+        "slot_index_in_bar": 2,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1004206,
+        "slot_index_in_bar": 3,
+        "bar_index": 0,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1004581,
+        "slot_index_in_bar": 4,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1004956,
+        "slot_index_in_bar": 5,
+        "bar_index": 0,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1005331,
+        "slot_index_in_bar": 6,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1005706,
+        "slot_index_in_bar": 7,
+        "bar_index": 0,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1006081,
+        "slot_index_in_bar": 0,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.486
+      },
+      {
+        "time_ms": 1006456,
+        "slot_index_in_bar": 1,
+        "bar_index": 1,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1006831,
+        "slot_index_in_bar": 2,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1007206,
+        "slot_index_in_bar": 3,
+        "bar_index": 1,
+        "is_accented": false,
+        "effective_gain": 0.36
+      }
+    ],
+    "last_4": [
+      {
+        "time_ms": 1007581,
+        "slot_index_in_bar": 4,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1007956,
+        "slot_index_in_bar": 5,
+        "bar_index": 1,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1008331,
+        "slot_index_in_bar": 6,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1008706,
+        "slot_index_in_bar": 7,
+        "bar_index": 1,
+        "is_accented": false,
+        "effective_gain": 0.36
+      }
+    ],
+    "accent_slots_by_bar": {
+      "0": [
+        0,
+        2,
+        4,
+        6
+      ],
+      "1": [
+        0,
+        2,
+        4,
+        6
+      ]
+    }
+  }
 }

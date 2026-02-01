@@ -1,38 +1,44 @@
 {
   "id": "N4_low_confidence_storm",
-  "description": "Low confidence storm: unreliable detection forces suppression despite bad-looking metrics",
-  "now_ms": 1009200,
+  "now_ms": 1010500,
   "musical": {
-    "bpm": 85,
+    "bpm": 80,
     "meter": "4/4",
     "bars": 2,
     "subdivision": "8n",
-    "grid_start_ms": 1001400,
-    "slot_ms": 353
+    "grid_start_ms": 1001500,
+    "slot_ms": 375
   },
-  "takeFinalized": {
-    "type": "TakeFinalized",
-    "t_ms": 1008800,
+  "takeAnalysis": {
+    "type": "TakeAnalysis",
     "exercise_id": "2bar_eighth_down",
-    "take_id": "take_n4_001",
-    "timing": {
-      "take_start_ms": 1000000,
-      "count_in_start_ms": 1000000,
-      "play_start_ms": 1001400,
-      "expected_grid_start_ms": 1001400,
-      "expected_grid_end_ms": 1007048,
-      "finalize_reason": "GRID_COMPLETE"
+    "take_id": "take_N4",
+    "metrics": {
+      "hit_rate": 0.55,
+      "miss_rate": 0.45,
+      "extra_rate": 0.3,
+      "mean_offset_ms": 20,
+      "median_offset_ms": 18,
+      "std_offset_ms": 45,
+      "p90_abs_offset_ms": 110,
+      "drift_ms_per_bar": 35,
+      "stability": 0.18
     },
-    "context": {
-      "meter": "4/4",
-      "bars": 2,
-      "bpm_target": 85,
-      "bpm_tolerance": 6,
-      "subdivision": "8n",
-      "count_in_beats": 2,
-      "pattern_id": "2bar_eighth_down"
+    "grid": {
+      "grid_start_ms": 1001500,
+      "slot_ms": 375,
+      "total_slots": 16,
+      "expected_slots": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     },
-    "events": []
+    "alignment": {
+      "matched": [{ "slot": 0, "seq": 1401, "offset_ms": 60 }],
+      "missed_slots": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      "extra_seqs": [1491, 1492, 1493, 1494, 1495]
+    },
+    "quality": {
+      "event_confidence_mean": 0.35,
+      "analysis_confidence": 0.42
+    }
   },
   "segmenterFlags": {
     "late_start": false,
@@ -45,71 +51,286 @@
     "low_confidence_events": 15
   },
   "finalize_reason": "GRID_COMPLETE",
-  "takeAnalysis": {
-    "type": "TakeAnalysis",
-    "exercise_id": "2bar_eighth_down",
-    "take_id": "take_n4_001",
-    "metrics": {
-      "hit_rate": 0.50,
-      "miss_rate": 0.50,
-      "extra_rate": 0.25,
-      "mean_offset_ms": 28,
-      "median_offset_ms": 35,
-      "std_offset_ms": 65,
-      "p90_abs_offset_ms": 95,
-      "drift_ms_per_bar": 18,
-      "stability": 0.35
-    },
-    "grid": {
-      "grid_start_ms": 1001400,
-      "slot_ms": 353,
-      "total_slots": 16,
-      "expected_slots": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-    },
-    "alignment": {
-      "matched": [
-        { "slot": 0, "seq": 401, "offset_ms": 15 },
-        { "slot": 2, "seq": 402, "offset_ms": 45 },
-        { "slot": 3, "seq": 403, "offset_ms": -80 },
-        { "slot": 5, "seq": 404, "offset_ms": 92 },
-        { "slot": 8, "seq": 405, "offset_ms": -55 },
-        { "slot": 10, "seq": 406, "offset_ms": 70 },
-        { "slot": 12, "seq": 407, "offset_ms": -40 },
-        { "slot": 14, "seq": 408, "offset_ms": 88 }
-      ],
-      "missed_slots": [1, 4, 6, 7, 9, 11, 13, 15],
-      "extra_seqs": [409, 410, 411, 412]
-    },
-    "quality": {
-      "event_confidence_mean": 0.35
-    }
-  },
   "userSignals": {
     "mode": "PRACTICE",
     "backoff": "L2",
-    "timeSinceLastNoteOnMs": 1300,
+    "nowMs": 1010500,
+    "timeSinceLastNoteOnMs": 1500,
     "phraseBoundaryDetected": true,
-    "timeSincePhraseBoundaryMs": 1100,
-    "ignoreStreak": 1,
-    "silencePreference": 0.4,
-    "userExplicitQuiet": false
+    "timeSincePhraseBoundaryMs": 1200,
+    "ignoreStreak": 0,
+    "silencePreference": 0.6,
+    "userExplicitQuiet": false,
+    "modeConfidence": 0.8
   },
   "policyConfig": {
-    "minPauseMs": 1000,
+    "minPauseMs": 1200,
     "betweenPhraseOnly": true,
-    "interruptBudgetPerMin": 1.0
+    "interruptBudgetPerMin": 1,
+    "version": "fixture_nasties_v1",
+    "matrix": {
+      "NEUTRAL": {
+        "L0": {
+          "interruptBudgetPerMin": 2,
+          "minPauseMs": 700,
+          "betweenPhraseOnly": false,
+          "realTimeEnabled": true,
+          "granularity": "phrase",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 1, "visual": 1, "audio": 1, "text": 0.5 },
+          "tone": "supportive",
+          "assist": { "tempoStabilization": true, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L1": {
+          "interruptBudgetPerMin": 2,
+          "minPauseMs": 900,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": true,
+          "granularity": "phrase",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 1, "visual": 1, "audio": 0.6, "text": 0.4 },
+          "tone": "supportive",
+          "assist": { "tempoStabilization": true, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L2": {
+          "interruptBudgetPerMin": 1,
+          "minPauseMs": 1200,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": true,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 1, "visual": 0.8, "audio": 0.2, "text": 0.5 },
+          "tone": "suggestive",
+          "assist": { "tempoStabilization": true, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L3": {
+          "interruptBudgetPerMin": 0.5,
+          "minPauseMs": 1500,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.8, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L4": {
+          "interruptBudgetPerMin": 0.25,
+          "minPauseMs": 2000,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.6, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        }
+      },
+      "PRACTICE": {
+        "L0": {
+          "interruptBudgetPerMin": 2,
+          "minPauseMs": 700,
+          "betweenPhraseOnly": false,
+          "realTimeEnabled": true,
+          "granularity": "micro",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 1, "visual": 1, "audio": 0.8, "text": 0.4 },
+          "tone": "supportive",
+          "assist": { "tempoStabilization": true, "phraseBoundaryMarking": true, "callResponse": true, "postSessionRecap": true }
+        },
+        "L1": {
+          "interruptBudgetPerMin": 2,
+          "minPauseMs": 900,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": true,
+          "granularity": "phrase",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 1, "visual": 1, "audio": 0.6, "text": 0.4 },
+          "tone": "supportive",
+          "assist": { "tempoStabilization": true, "phraseBoundaryMarking": true, "callResponse": true, "postSessionRecap": true }
+        },
+        "L2": {
+          "interruptBudgetPerMin": 1,
+          "minPauseMs": 1200,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": true,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 1, "visual": 0.8, "audio": 0.2, "text": 0.5 },
+          "tone": "suggestive",
+          "assist": { "tempoStabilization": true, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L3": {
+          "interruptBudgetPerMin": 0.5,
+          "minPauseMs": 1500,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.8, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L4": {
+          "interruptBudgetPerMin": 0.25,
+          "minPauseMs": 2000,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.6, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        }
+      },
+      "PERFORMANCE": {
+        "L0": {
+          "interruptBudgetPerMin": 0.5,
+          "minPauseMs": 1500,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.8, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L1": {
+          "interruptBudgetPerMin": 0.5,
+          "minPauseMs": 1500,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.8, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L2": {
+          "interruptBudgetPerMin": 0.25,
+          "minPauseMs": 2000,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.6, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L3": {
+          "interruptBudgetPerMin": 0.25,
+          "minPauseMs": 2500,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.6, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L4": {
+          "interruptBudgetPerMin": 0.1,
+          "minPauseMs": 3000,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.4, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        }
+      },
+      "EXPLORATION": {
+        "L0": {
+          "interruptBudgetPerMin": 1,
+          "minPauseMs": 900,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": true,
+          "granularity": "phrase",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 1, "visual": 1, "audio": 0.5, "text": 0.8 },
+          "tone": "suggestive",
+          "assist": { "tempoStabilization": true, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L1": {
+          "interruptBudgetPerMin": 1,
+          "minPauseMs": 1200,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": true,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 1, "visual": 1, "audio": 0.2, "text": 1 },
+          "tone": "suggestive",
+          "assist": { "tempoStabilization": true, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L2": {
+          "interruptBudgetPerMin": 0.5,
+          "minPauseMs": 1500,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.8, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L3": {
+          "interruptBudgetPerMin": 0.25,
+          "minPauseMs": 2000,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.6, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        },
+        "L4": {
+          "interruptBudgetPerMin": 0.1,
+          "minPauseMs": 2500,
+          "betweenPhraseOnly": true,
+          "realTimeEnabled": false,
+          "granularity": "summary",
+          "maxCuesPerIntervention": 1,
+          "modalityWeights": { "haptic": 0.4, "visual": 1, "audio": 0, "text": 1 },
+          "tone": "silent",
+          "assist": { "tempoStabilization": false, "phraseBoundaryMarking": true, "callResponse": false, "postSessionRecap": true }
+        }
+      }
+    },
+    "runtime": {
+      "tokenBucket": {
+        "maxTokens": 1,
+        "stochasticRounding": false,
+        "cooldownAfterInterventionMs": 10000
+      },
+      "safeWindow": {
+        "phraseBoundaryRequiredAtOrAboveBackoff": "L1",
+        "minPauseMsByBackoff": { "L0": 700, "L1": 900, "L2": 1200, "L3": 1500, "L4": 2000 },
+        "phraseBoundaryDebounceMs": 250,
+        "silenceGateExtraPauseMs": 200
+      },
+      "globalRules": {
+        "performanceNeverInstructive": true,
+        "performanceNoMicroGranularity": true,
+        "backoffAtOrAboveL2ForcesBetweenPhraseOnly": true,
+        "ignoreStreakClamp": { "ignoreStreakThreshold": 2, "maxInterruptBudgetPerMin": 0.5, "extraPauseMs": 400 }
+      },
+      "modalityAvailability": { "haptic": true, "visual": true, "audio": true, "text": true }
+    }
   },
   "deviceCapabilities": {
-    "modalitiesAvailable": ["haptic", "visual"]
+    "modalitiesAvailable": ["haptic", "visual", "audio"]
   },
   "expected": {
     "intent": "repeat_once",
     "cue_key": "one_more_take_same_tempo",
-    "shouldInitiate": true,
-    "suppressed": false,
-    "must_not_schedule_pulse_types": ["subdivision", "backbeat"],
-    "allowed_modalities_contains": ["haptic", "visual"],
-    "must_not_use_modalities": ["audio"],
-    "confidence_gate": "low_confidence_suppresses_detailed_feedback"
+    "suppressed": true,
+    "shouldInitiate_one_of": [false, true],
+    "if_initiate_then": {
+      "must_not_schedule_pulse_types": ["subdivision", "backbeat"],
+      "modality_not": "audio",
+      "maxCues": 1
+    }
   }
 }

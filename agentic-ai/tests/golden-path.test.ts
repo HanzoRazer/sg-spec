@@ -333,19 +333,19 @@ describe("Golden-Path: Cue Binding (isolated)", () => {
 
 describe("Nasties: Intent Priority Resolution (isolated)", () => {
   it("N1: missed_count_in + late_start → wait_for_count_in (count-in priority)", () => {
-    const fx = loadFixture(path.join(NASTIES_DIR, "N1_missed_countin_plus_late_start.json"));
+    const fx = loadFixture(path.join(NASTIES_DIR, "N1_missed_count_in_and_late_start.json"));
     const intent = resolveCoachIntent(fx.takeAnalysis, fx.finalize_reason, fx.segmenterFlags);
     expect(intent).toBe("wait_for_count_in");
   });
 
   it("N2: partial_take + tempo_mismatch → finish_two_bars (completion priority)", () => {
-    const fx = loadFixture(path.join(NASTIES_DIR, "N2_partial_take_plus_tempo_mismatch.json"));
+    const fx = loadFixture(path.join(NASTIES_DIR, "N2_partial_take_and_tempo_mismatch.json"));
     const intent = resolveCoachIntent(fx.takeAnalysis, fx.finalize_reason, fx.segmenterFlags);
     expect(intent).toBe("finish_two_bars");
   });
 
   it("N3: extra_bars + drift → clarify_exercise_length (length correction priority)", () => {
-    const fx = loadFixture(path.join(NASTIES_DIR, "N3_extra_bars_plus_drift.json"));
+    const fx = loadFixture(path.join(NASTIES_DIR, "N3_extra_bars_and_drift.json"));
     const intent = resolveCoachIntent(fx.takeAnalysis, fx.finalize_reason, fx.segmenterFlags);
     expect(intent).toBe("clarify_exercise_length");
   });
@@ -360,7 +360,7 @@ describe("Nasties: Intent Priority Resolution (isolated)", () => {
     // Note: Current router does not use stability for intent selection.
     // Metrics pass (hit_rate=0.88, p90=35, extra=0.06) so it gets raise_challenge.
     // Future enhancement: consider stability check before raise_challenge.
-    const fx = loadFixture(path.join(NASTIES_DIR, "N5_metric_contradiction.json"));
+    const fx = loadFixture(path.join(NASTIES_DIR, "N5_metric_contradiction_raise_challenge.json"));
     const intent = resolveCoachIntent(fx.takeAnalysis, fx.finalize_reason, fx.segmenterFlags);
     expect(intent).toBe("raise_challenge");
   });

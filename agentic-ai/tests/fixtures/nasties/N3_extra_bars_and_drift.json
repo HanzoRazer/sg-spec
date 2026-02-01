@@ -1,66 +1,67 @@
 {
-  "id": "N6b_quantize_snap_outside_tolerance",
-  "now_ms": 1001581,
+  "id": "N3_extra_bars_and_drift",
+  "now_ms": 1012000,
   "musical": {
     "bpm": 80,
     "meter": "4/4",
     "bars": 2,
     "subdivision": "8n",
-    "grid_start_ms": 1003081,
+    "grid_start_ms": 1001500,
     "slot_ms": 375
   },
   "takeAnalysis": {
     "type": "TakeAnalysis",
     "exercise_id": "2bar_eighth_down",
-    "take_id": "take_N6b",
+    "take_id": "take_N3",
     "metrics": {
-      "hit_rate": 0.88,
-      "miss_rate": 0.12,
-      "extra_rate": 0.05,
-      "mean_offset_ms": 4,
-      "median_offset_ms": 3,
-      "std_offset_ms": 26,
-      "p90_abs_offset_ms": 62,
-      "drift_ms_per_bar": 8,
-      "stability": 0.63
+      "hit_rate": 0.86,
+      "miss_rate": 0.14,
+      "extra_rate": 0.25,
+      "mean_offset_ms": -4,
+      "median_offset_ms": -5,
+      "std_offset_ms": 18,
+      "p90_abs_offset_ms": 48,
+      "drift_ms_per_bar": -62,
+      "stability": 0.55
     },
     "grid": {
-      "grid_start_ms": 1003081,
+      "grid_start_ms": 1001500,
       "slot_ms": 375,
       "total_slots": 16,
       "expected_slots": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     },
     "alignment": {
       "matched": [
-        { "slot": 0, "seq": 1701, "offset_ms": 18 },
-        { "slot": 1, "seq": 1702, "offset_ms": -22 }
+        { "slot": 0, "seq": 1301, "offset_ms": 6 },
+        { "slot": 1, "seq": 1302, "offset_ms": -9 },
+        { "slot": 2, "seq": 1303, "offset_ms": -14 }
       ],
-      "missed_slots": [12, 15],
-      "extra_seqs": [1791]
+      "missed_slots": [10, 15],
+      "extra_seqs": [1391, 1392, 1393, 1394]
     },
     "quality": {
-      "event_confidence_mean": 0.86,
-      "analysis_confidence": 0.88
+      "event_confidence_mean": 0.40,
+      "analysis_confidence": 0.54
     }
   },
   "segmenterFlags": {
     "late_start": false,
     "missed_count_in": false,
-    "extra_events_after_end": false,
-    "extra_bars": false,
+    "extra_events_after_end": true,
+    "extra_bars": true,
     "partial_take": false,
     "tempo_mismatch": false,
     "restart_detected": false,
-    "low_confidence_events": 0
+    "low_confidence_events": 10
   },
   "finalize_reason": "GRID_COMPLETE",
   "userSignals": {
     "mode": "PRACTICE",
     "backoff": "L1",
-    "nowMs": 1001581,
-    "timeSinceLastNoteOnMs": 2000,
+    "nowMs": 1012000,
+    "timeSinceLastNoteOnMs": 1600,
     "phraseBoundaryDetected": true,
-    "timeSincePhraseBoundaryMs": 1800,
+    "timeSincePhraseBoundaryMs": 1300,
     "ignoreStreak": 0,
     "silencePreference": 0.2,
     "userExplicitQuiet": false,
@@ -323,23 +324,12 @@
     }
   },
   "deviceCapabilities": {
-    "modalitiesAvailable": ["haptic"]
+    "modalitiesAvailable": ["haptic", "visual"]
   },
   "expected": {
-    "intent": "subdivision_support",
-    "cue_key": "add_subdivision_pulse",
+    "intent": "clarify_exercise_length",
+    "cue_key": "stop_after_two_bars",
     "shouldInitiate": true,
-    "selected_modality": "haptic",
-    "pulseConfig": {
-      "deliver_at_ms_expected": 1001581,
-      "max_snap_ms_expected": 80,
-      "grid_boundary_ms": 1001500,
-      "next_boundary_ms": 1001875,
-      "comment": "NOTE: Snap tolerance not implemented in runner. Current behavior uses grid_start_ms directly. Future: 81ms outside tolerance should snap forward to next boundary."
-    },
-    "pulse": {
-      "pulse_type": "subdivision",
-      "expected_first_4_times_ms": [1003081, 1003456, 1003831, 1004206]
-    }
+    "must_not_schedule_pulse_types": ["subdivision", "backbeat"]
   }
 }

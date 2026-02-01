@@ -1,14 +1,14 @@
 {
   "intent": "finish_two_bars",
   "cue_key": "finish_two_bars_slow_if_needed",
-  "analysis_confidence": 0.315,
+  "analysis_confidence": 0.312,
   "gradeability": "LOW",
   "suppressed": true,
   "guidance": {
     "shouldInitiate": false,
     "reason": "insufficient_pause",
     "mode": "PRACTICE",
-    "backoff": "L1",
+    "backoff": "L2",
     "modality": null
   },
   "renderer": null,
