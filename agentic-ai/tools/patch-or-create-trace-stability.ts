@@ -128,15 +128,16 @@ function patchExistingTrace(tracePath: string, trace: any, dryRun: boolean): boo
   return true;
 }
 
-function findTargetTrace(traceDir: string): { file: string; data: any } | null {
+function findTargetTrace(traceDir: string, fixtureId: string): { file: string; data: any } | null {
   if (!fs.existsSync(traceDir)) return null;
 
-  for (const file of fs.readdirSync(traceDir)) {
-    if (!file.endsWith(".trace.json")) continue;
-    const full = path.join(traceDir, file);
+  // Match by filename convention: <fixture_id>.trace.json
+  const expectedFilename = `${fixtureId}.trace.json`;
+  const full = path.join(traceDir, expectedFilename);
+
+  if (fs.existsSync(full)) {
     const data = safeReadJson(full);
-    if (!data) continue;
-    if (data.fixture_id === TARGET_FIXTURE_ID) return { file: full, data };
+    if (data) return { file: full, data };
   }
   return null;
 }
@@ -194,7 +195,7 @@ function chooseNewTraceFilename(outDir: string): string {
 async function main() {
   const args = parseArgs(process.argv);
 
-  const found = findTargetTrace(args.traceDir);
+  const found = findTargetTrace(args.traceDir, TARGET_FIXTURE_ID);
 
   if (found) {
     patchExistingTrace(found.file, found.data, args.dryRun);

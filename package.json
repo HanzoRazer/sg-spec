@@ -12,8 +12,8 @@
     "traces:update": "cross-env UPDATE_TRACES=1 vitest run agentic-ai/tests/golden-traces.test.ts",
     "traces:update:stability": "cross-env UPDATE_TRACES=1 vitest run agentic-ai/tests/golden-traces.test.ts --testNamePattern='G1a|G1b'",
     "traces:check": "vitest run agentic-ai/tests/golden-traces.test.ts",
-    "traces:patch:stability": "ts-node --transpile-only agentic-ai/tools/patch-or-create-trace-stability.ts",
-    "traces:patch:stability:dry": "ts-node --transpile-only agentic-ai/tools/patch-or-create-trace-stability.ts --dry-run"
+    "traces:patch:stability": "ts-node --project agentic-ai/tools/tsconfig.json agentic-ai/tools/patch-or-create-trace-stability.ts",
+    "traces:patch:stability:dry": "ts-node --project agentic-ai/tools/tsconfig.json agentic-ai/tools/patch-or-create-trace-stability.ts --dry-run"
   },
   "repository": {
     "type": "git",
