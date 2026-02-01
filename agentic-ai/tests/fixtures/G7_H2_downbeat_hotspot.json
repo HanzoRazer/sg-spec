@@ -64,6 +64,7 @@
     "tempo_mismatch": false,
     "extra_bars": false,
     "restart_detected": false,
+    "extra_events_after_end": false,
     "low_confidence_events": 0
   },
   "finalize_reason": "GRID_COMPLETE",

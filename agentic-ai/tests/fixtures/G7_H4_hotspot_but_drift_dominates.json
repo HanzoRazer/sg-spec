@@ -1,60 +1,60 @@
 {
-  "id": "H1_offbeat_hotspot",
-  "description": "Misses concentrate on offbeat slot_index_in_bar=1 across both bars -> FIX_REPEATABLE_SLOT_ERRORS",
-  "now_ms": 3000000,
+  "id": "H4_hotspot_but_drift_dominates",
+  "description": "Hotspot exists but driftProblem(|drift|>30) should dominate -> drift objective wins (backbeat anchor)",
+  "now_ms": 3030000,
   "musical": {
     "bpm": 80,
     "meter": "4/4",
     "bars": 2,
     "subdivision": "8n",
-    "grid_start_ms": 3001500,
+    "grid_start_ms": 3031500,
     "slot_ms": 375
   },
   "takeAnalysis": {
     "type": "TakeAnalysis",
     "exercise_id": "2bar_eighth_down",
-    "take_id": "take_H1",
+    "take_id": "take_H4",
     "metrics": {
       "hit_rate": 0.875,
       "miss_rate": 0.125,
       "extra_rate": 0.05,
-      "mean_offset_ms": 2,
-      "median_offset_ms": 1,
-      "std_offset_ms": 10,
-      "p90_abs_offset_ms": 36,
-      "drift_ms_per_bar": 10,
-      "stability": 0.78
+      "mean_offset_ms": 1,
+      "median_offset_ms": 0,
+      "std_offset_ms": 12,
+      "p90_abs_offset_ms": 40,
+      "drift_ms_per_bar": 55,
+      "stability": 0.75
     },
     "grid": {
-      "grid_start_ms": 3001500,
+      "grid_start_ms": 3031500,
       "slot_ms": 375,
       "total_slots": 16,
       "expected_slots": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     },
     "alignment": {
       "matched": [
-        { "slot": 0, "seq": 1001, "offset_ms": 2 },
-        { "slot": 2, "seq": 1002, "offset_ms": -1 },
-        { "slot": 3, "seq": 1003, "offset_ms": 1 },
-        { "slot": 4, "seq": 1004, "offset_ms": 0 },
-        { "slot": 5, "seq": 1005, "offset_ms": 2 },
-        { "slot": 6, "seq": 1006, "offset_ms": -2 },
-        { "slot": 7, "seq": 1007, "offset_ms": 1 },
+        { "slot": 0, "seq": 1301, "offset_ms": 3 },
+        { "slot": 2, "seq": 1302, "offset_ms": -4 },
+        { "slot": 3, "seq": 1303, "offset_ms": 2 },
+        { "slot": 4, "seq": 1304, "offset_ms": -3 },
+        { "slot": 5, "seq": 1305, "offset_ms": 1 },
+        { "slot": 6, "seq": 1306, "offset_ms": 0 },
+        { "slot": 7, "seq": 1307, "offset_ms": 2 },
 
-        { "slot": 8, "seq": 1008, "offset_ms": 2 },
-        { "slot": 10, "seq": 1009, "offset_ms": -1 },
-        { "slot": 11, "seq": 1010, "offset_ms": 1 },
-        { "slot": 12, "seq": 1011, "offset_ms": 0 },
-        { "slot": 13, "seq": 1012, "offset_ms": 2 },
-        { "slot": 14, "seq": 1013, "offset_ms": -1 },
-        { "slot": 15, "seq": 1014, "offset_ms": 1 }
+        { "slot": 8, "seq": 1308, "offset_ms": 20 },
+        { "slot": 10, "seq": 1309, "offset_ms": 25 },
+        { "slot": 11, "seq": 1310, "offset_ms": 28 },
+        { "slot": 12, "seq": 1311, "offset_ms": 32 },
+        { "slot": 13, "seq": 1312, "offset_ms": 35 },
+        { "slot": 14, "seq": 1313, "offset_ms": 39 },
+        { "slot": 15, "seq": 1314, "offset_ms": 42 }
       ],
       "missed_slots": [1, 9],
       "extra_seqs": []
     },
     "quality": {
-      "event_confidence_mean": 0.91,
-      "analysis_confidence": 0.89
+      "event_confidence_mean": 0.92,
+      "analysis_confidence": 0.9
     }
   },
   "segmenterFlags": {
@@ -64,13 +64,14 @@
     "tempo_mismatch": false,
     "extra_bars": false,
     "restart_detected": false,
+    "extra_events_after_end": false,
     "low_confidence_events": 0
   },
   "finalize_reason": "GRID_COMPLETE",
   "userSignals": {
     "mode": "PRACTICE",
     "backoff": "L1",
-    "nowMs": 3000000,
+    "nowMs": 3030000,
     "timeSinceLastNoteOnMs": 1400,
     "phraseBoundaryDetected": true,
     "timeSincePhraseBoundaryMs": 1200,
@@ -336,8 +337,8 @@
     "modalitiesAvailable": ["haptic", "visual", "audio"]
   },
   "expected": {
-    "objective": "FIX_REPEATABLE_SLOT_ERRORS",
-    "intent": "subdivision_support",
-    "cue_key": "add_subdivision_pulse"
+    "objective": "STABILIZE_TEMPO_DRIFT",
+    "intent": "backbeat_anchor",
+    "cue_key": "emphasize_2_and_4"
   }
 }

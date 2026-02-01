@@ -1,0 +1,17 @@
+{
+  "objective": "RECOVER_TAKE",
+  "intent": "repeat_once",
+  "cue_key": "one_more_take_same_tempo",
+  "analysis_confidence": 0.927,
+  "gradeability": "HIGH",
+  "suppressed": false,
+  "guidance": {
+    "shouldInitiate": false,
+    "reason": "budget_or_cooldown",
+    "mode": "PRACTICE",
+    "backoff": "L1",
+    "modality": null
+  },
+  "renderer": null,
+  "pulses": null
+}

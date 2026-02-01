@@ -1,0 +1,17 @@
+{
+  "objective": "STABILIZE_TEMPO_DRIFT",
+  "intent": "backbeat_anchor",
+  "cue_key": "emphasize_2_and_4",
+  "analysis_confidence": 0.927,
+  "gradeability": "HIGH",
+  "suppressed": false,
+  "guidance": {
+    "shouldInitiate": false,
+    "reason": "budget_or_cooldown",
+    "mode": "PRACTICE",
+    "backoff": "L1",
+    "modality": null
+  },
+  "renderer": null,
+  "pulses": null
+}
