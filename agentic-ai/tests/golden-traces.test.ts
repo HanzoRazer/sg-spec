@@ -34,6 +34,7 @@ import {
 // ============================================================================
 
 const FIXTURES_DIR = path.join(__dirname, "fixtures");
+const GOLDEN_SUBDIR = path.join(__dirname, "fixtures", "golden");
 const NASTIES_DIR = path.join(__dirname, "fixtures", "nasties");
 const TRACES_DIR = path.join(__dirname, "golden-traces");
 const UPDATE_TRACES = process.env.UPDATE_TRACES === "1";
@@ -48,12 +49,21 @@ interface Fixture extends GoldenRunInput {
 }
 
 function listFixtureFiles(): string[] {
-  // Golden path fixtures (G*.json)
+  // Golden path fixtures (G*.json) from main fixtures dir
   const goldenFiles = fs
     .readdirSync(FIXTURES_DIR)
     .filter((f) => f.endsWith(".json") && f.startsWith("G"))
     .sort()
     .map((f) => path.join(FIXTURES_DIR, f));
+
+  // Golden subdirectory fixtures (G*.json) - stability gate tests etc.
+  const goldenSubdirFiles = fs.existsSync(GOLDEN_SUBDIR)
+    ? fs
+        .readdirSync(GOLDEN_SUBDIR)
+        .filter((f) => f.endsWith(".json") && f.startsWith("G"))
+        .sort()
+        .map((f) => path.join(GOLDEN_SUBDIR, f))
+    : [];
 
   // Nasties fixtures (N*.json)
   const nastyFiles = fs.existsSync(NASTIES_DIR)
@@ -64,7 +74,7 @@ function listFixtureFiles(): string[] {
         .map((f) => path.join(NASTIES_DIR, f))
     : [];
 
-  return [...goldenFiles, ...nastyFiles];
+  return [...goldenFiles, ...goldenSubdirFiles, ...nastyFiles];
 }
 
 function loadFixture(filePath: string): Fixture {
