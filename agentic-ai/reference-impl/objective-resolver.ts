@@ -142,6 +142,7 @@ const ALMOST = {
 const DRIFT_BAD = 30; // ms per bar
 const BIAS_BAD = 20; // median offset ms
 const EXTRA_BAD = 0.15;
+const PASS_STABILITY = 0.70; // stability gate for raise_challenge
 
 // ============================================================================
 // Metric Heuristics (aligned with analysis-to-intent.ts)
@@ -151,7 +152,8 @@ function isPass(m: TakeMetrics): boolean {
   return (
     m.hit_rate >= PASS.hit_rate &&
     m.p90_abs_offset_ms <= PASS.p90 &&
-    m.extra_rate <= PASS.extra_rate
+    m.extra_rate <= PASS.extra_rate &&
+    m.stability >= PASS_STABILITY
   );
 }
 

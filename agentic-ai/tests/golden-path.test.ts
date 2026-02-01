@@ -356,13 +356,12 @@ describe("Nasties: Intent Priority Resolution (isolated)", () => {
     expect(intent).toBe("repeat_once");
   });
 
-  it("N5: metric_contradiction (p90 good, stability bad) → raise_challenge (metrics pass despite bad stability)", () => {
-    // Note: Current router does not use stability for intent selection.
-    // Metrics pass (hit_rate=0.88, p90=35, extra=0.06) so it gets raise_challenge.
-    // Future enhancement: consider stability check before raise_challenge.
+  it("N5: metric_contradiction (stability bad) → subdivision_support (stability gate blocks raise_challenge)", () => {
+    // Stability gate: stability=0.2 < 0.70 blocks isPass() even with good hit_rate.
+    // p90=46 > 45 triggers timingSpreadProblem → subdivision_support.
     const fx = loadFixture(path.join(NASTIES_DIR, "N5_metric_contradiction_raise_challenge.json"));
     const intent = resolveCoachIntent(fx.takeAnalysis, fx.finalize_reason, fx.segmenterFlags);
-    expect(intent).toBe("raise_challenge");
+    expect(intent).toBe("subdivision_support");
   });
 });
 
