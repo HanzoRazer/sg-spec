@@ -1,4 +1,6 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env npx ts-node --transpile-only
+
+/// <reference types="node" />
 
 /**
  * Patch (or create) the golden trace for:
@@ -17,8 +19,8 @@
  *   --force              : overwrite existing trace file when creating (only if no match found but name collision)
  */
 
-import fs from "node:fs";
-import path from "node:path";
+import * as fs from "fs";
+import * as path from "path";
 
 type Args = {
   dryRun: boolean;
