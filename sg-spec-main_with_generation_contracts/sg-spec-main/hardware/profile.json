@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Smart Guitar Hardware Profile",
+  "version": "1.0.0",
+  "description": "Capability descriptors for Smart Guitar",
+
+  "audio": {
+    "mode": "practice_and_performance",
+    "quality": "high_resolution",
+    "latency": "low"
+  },
+
+  "connectivity": {
+    "wired": true,
+    "wireless": true,
+    "midi": true
+  },
+
+  "compute": {
+    "profile": "embedded_host",
+    "local_processing": true
+  },
+
+  "power": {
+    "type": "battery",
+    "runtime": "extended"
+  },
+
+  "features": {
+    "temperament_support": true,
+    "led_markers": true,
+    "effects_processing": true,
+    "wireless_audio": true,
+    "midi_output": true,
+    "firmware_updates": true
+  },
+
+  "model_variants": [
+    {
+      "id": "headed",
+      "display_name": "Standard"
+    },
+    {
+      "id": "headless",
+      "display_name": "Headless"
+    }
+  ]
+}

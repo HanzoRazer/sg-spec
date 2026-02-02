@@ -1,0 +1,21 @@
+schema_id: dance_pack_set
+schema_version: v1
+
+metadata:
+  id: syncopation_ghosts_v1
+  display_name: Syncopation & Ghost Notes
+  version: "1.0.0"
+  tier: plus
+  sku: packs.syncopation_ghosts.v1
+  tags:
+    - syncopation
+    - ghosts
+    - pocket
+
+packs:
+  - funk_16th_pocket_v1
+  - samba_traditional_v1
+  - salsa_clave_locked_v1
+  - neo_soul_laidback_pocket_v1
+
+extensions: {}

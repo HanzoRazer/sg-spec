@@ -1,0 +1,114 @@
+{
+  "id": "G2_timing_spread",
+  "now_ms": 1009050,
+  "musical": {
+    "bpm": 80,
+    "meter": "4/4",
+    "bars": 2,
+    "subdivision": "8n",
+    "grid_start_ms": 1001500,
+    "slot_ms": 375
+  },
+  "takeFinalized": {
+    "type": "TakeFinalized",
+    "t_ms": 1007600,
+    "exercise_id": "2bar_eighth_down",
+    "take_id": "take_00002",
+    "timing": {
+      "take_start_ms": 1000000,
+      "count_in_start_ms": 1000000,
+      "play_start_ms": 1001500,
+      "expected_grid_start_ms": 1001500,
+      "expected_grid_end_ms": 1007500,
+      "finalize_reason": "GRID_COMPLETE"
+    },
+    "context": {
+      "meter": "4/4",
+      "bars": 2,
+      "bpm_target": 80,
+      "bpm_tolerance": 6,
+      "subdivision": "8n",
+      "count_in_beats": 2,
+      "pattern_id": "2bar_eighth_down"
+    },
+    "events": []
+  },
+  "segmenterFlags": {
+    "late_start": false,
+    "missed_count_in": false,
+    "extra_events_after_end": false,
+    "extra_bars": false,
+    "partial_take": false,
+    "tempo_mismatch": false,
+    "restart_detected": false,
+    "low_confidence_events": 0
+  },
+  "finalize_reason": "GRID_COMPLETE",
+  "takeAnalysis": {
+    "type": "TakeAnalysis",
+    "exercise_id": "2bar_eighth_down",
+    "take_id": "take_00002",
+    "metrics": {
+      "hit_rate": 0.88,
+      "miss_rate": 0.12,
+      "extra_rate": 0.05,
+      "mean_offset_ms": 4,
+      "median_offset_ms": 3,
+      "std_offset_ms": 25,
+      "p90_abs_offset_ms": 62,
+      "drift_ms_per_bar": 8,
+      "stability": 0.63
+    },
+    "grid": {
+      "grid_start_ms": 1001500,
+      "slot_ms": 375,
+      "total_slots": 16,
+      "expected_slots": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    },
+    "alignment": {
+      "matched": [
+        { "slot": 0, "seq": 201, "offset_ms": 18 },
+        { "slot": 1, "seq": 202, "offset_ms": -22 },
+        { "slot": 2, "seq": 203, "offset_ms": 35 },
+        { "slot": 3, "seq": 204, "offset_ms": -40 }
+      ],
+      "missed_slots": [12, 15],
+      "extra_seqs": [299]
+    },
+    "quality": {
+      "event_confidence_mean": 0.85
+    }
+  },
+  "userSignals": {
+    "mode": "PRACTICE",
+    "backoff": "L1",
+    "timeSinceLastNoteOnMs": 1400,
+    "phraseBoundaryDetected": true,
+    "timeSincePhraseBoundaryMs": 1200,
+    "ignoreStreak": 0,
+    "silencePreference": 0.2,
+    "userExplicitQuiet": false
+  },
+  "policyConfig": {
+    "minPauseMs": 900,
+    "betweenPhraseOnly": true,
+    "interruptBudgetPerMin": 1.5
+  },
+  "deviceCapabilities": {
+    "modalitiesAvailable": ["haptic"]
+  },
+  "expected": {
+    "intent": "subdivision_support",
+    "cue_key": "add_subdivision_pulse",
+    "shouldInitiate": true,
+    "selected_modality": "haptic",
+    "pulse": {
+      "pulse_type": "subdivision",
+      "grid_start_ms": 1001500,
+      "slot_ms": 375,
+      "expected_event_count": 16,
+      "expected_first_4_times_ms": [1001500, 1001875, 1002250, 1002625],
+      "accent_slots_in_bar": [0, 2, 4, 6]
+    }
+  }
+}

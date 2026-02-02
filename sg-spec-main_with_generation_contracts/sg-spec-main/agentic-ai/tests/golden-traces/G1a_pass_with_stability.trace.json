@@ -1,0 +1,23 @@
+{
+  "objective": "ADVANCE_DIFFICULTY",
+  "intent": "raise_challenge",
+  "cue_key": "nice_lock_in_bump_tempo",
+  "analysis_confidence": 0.922,
+  "gradeability": "HIGH",
+  "suppressed": false,
+  "guidance": {
+    "shouldInitiate": true,
+    "reason": "ok",
+    "mode": "PRACTICE",
+    "backoff": "L1",
+    "modality": "visual"
+  },
+  "renderer": {
+    "type": "RendererEnvelope",
+    "payload_type": "TextPromptPayload",
+    "pulse_type": null,
+    "deliver_at_ms": 2000000,
+    "selected_modality": "visual"
+  },
+  "pulses": null
+}

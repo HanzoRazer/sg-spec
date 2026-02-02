@@ -1,0 +1,40 @@
+{
+  "name": "sg-spec",
+  "version": "1.0.0",
+  "description": "> **String Master Smart Guitar — Contract Specifications**",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "traces:update": "cross-env UPDATE_TRACES=1 vitest run agentic-ai/tests/golden-traces.test.ts",
+    "traces:update:stability": "cross-env UPDATE_TRACES=1 vitest run agentic-ai/tests/golden-traces.test.ts --testNamePattern='G1a|G1b'",
+    "traces:check": "vitest run agentic-ai/tests/golden-traces.test.ts",
+    "traces:patch:stability": "ts-node --project agentic-ai/tools/tsconfig.json agentic-ai/tools/patch-or-create-trace-stability.ts",
+    "traces:patch:stability:dry": "ts-node --project agentic-ai/tools/tsconfig.json agentic-ai/tools/patch-or-create-trace-stability.ts --dry-run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HanzoRazer/sg-spec.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/HanzoRazer/sg-spec/issues"
+  },
+  "homepage": "https://github.com/HanzoRazer/sg-spec#readme",
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "cross-env": "^10.1.0",
+    "fast-check": "^4.5.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

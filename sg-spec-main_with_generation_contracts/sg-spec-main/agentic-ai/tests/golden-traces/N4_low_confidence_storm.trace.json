@@ -1,0 +1,17 @@
+{
+  "objective": "RECOVER_TAKE",
+  "intent": "repeat_once",
+  "cue_key": "one_more_take_same_tempo",
+  "analysis_confidence": 0.535,
+  "gradeability": "LOW",
+  "suppressed": true,
+  "guidance": {
+    "shouldInitiate": false,
+    "reason": "insufficient_pause",
+    "mode": "PRACTICE",
+    "backoff": "L2",
+    "modality": null
+  },
+  "renderer": null,
+  "pulses": null
+}

@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartguitar.dev/schemas/agentic-ai/take-events.schema.json",
+  "title": "Smart Guitar Take Events - Segmenter I/O Contracts",
+  "description": "Event schemas for the take segmenter: strum candidates, take status, and finalized takes.",
+
+  "$defs": {
+    "StrumDirection": {
+      "type": "string",
+      "enum": ["down", "up", "unknown"]
+    },
+
+    "Subdivision": {
+      "type": "string",
+      "enum": ["4n", "8n", "16n"]
+    },
+
+    "Meter": {
+      "type": "string",
+      "enum": ["4/4", "3/4", "6/8"]
+    },
+
+    "TakeState": {
+      "type": "string",
+      "enum": ["ARMED", "COUNT_IN", "PLAYING", "FINALIZING"]
+    },
+
+    "FinalizeReason": {
+      "type": "string",
+      "enum": ["GRID_COMPLETE", "USER_STOP", "RESTART", "CANCELLED"]
+    },
+
+    "StrumCandidate": {
+      "type": "object",
+      "description": "Raw strum detection event from audio/sensor layer.",
+      "required": ["type", "t_ms", "confidence", "direction", "seq"],
+      "properties": {
+        "type": { "const": "StrumCandidate" },
+        "t_ms": { "type": "integer", "description": "Monotonic timestamp in milliseconds" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "direction": { "$ref": "#/$defs/StrumDirection" },
+        "intensity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "is_mute": { "type": "boolean" },
+        "source": { "type": "string", "enum": ["audio", "sensor", "fusion"] },
+        "seq": { "type": "integer", "description": "Monotonic sequence ID for deduplication" }
+      }
+    },
+
+    "StrumEvent": {
+      "type": "object",
+      "description": "Filtered/accepted strum event included in a finalized take.",
+      "required": ["t_ms", "direction", "confidence", "seq"],
+      "properties": {
+        "t_ms": { "type": "integer" },
+        "direction": { "$ref": "#/$defs/StrumDirection" },
+        "intensity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "seq": { "type": "integer" }
+      }
+    },
+
+    "StrumPatternSpec": {
+      "type": "object",
+      "required": ["pattern_id", "subdivision", "expected_hits"],
+      "properties": {
+        "pattern_id": { "type": "string" },
+        "subdivision": { "$ref": "#/$defs/Subdivision" },
+        "expected_hits": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "description": "Grid slot indices for expected hits (e.g., 0-15 for 2 bars of 8ths)"
+        },
+        "directions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/StrumDirection" },
+          "description": "Expected strum directions, same length as expected_hits"
+        }
+      }
+    },
+
+    "StrumExerciseContext": {
+      "type": "object",
+      "required": ["exercise_id", "meter", "bars", "bpm_target", "bpm_tolerance", "count_in_beats", "pattern"],
+      "properties": {
+        "exercise_id": { "type": "string" },
+        "meter": { "$ref": "#/$defs/Meter" },
+        "bars": { "type": "integer", "minimum": 1 },
+        "bpm_target": { "type": "number", "minimum": 20, "maximum": 300 },
+        "bpm_tolerance": { "type": "number", "minimum": 0 },
+        "count_in_beats": { "type": "integer", "minimum": 0 },
+        "pattern": { "$ref": "#/$defs/StrumPatternSpec" },
+        "swing": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+
+    "TakeStatus": {
+      "type": "object",
+      "description": "Real-time status update during a take.",
+      "required": ["type", "t_ms", "exercise_id", "take_id", "state", "progress", "diagnostics"],
+      "properties": {
+        "type": { "const": "TakeStatus" },
+        "t_ms": { "type": "integer" },
+        "exercise_id": { "type": "string" },
+        "take_id": { "type": "string" },
+        "state": { "$ref": "#/$defs/TakeState" },
+        "progress": {
+          "type": "object",
+          "required": ["count_in_beats_done", "bars_done"],
+          "properties": {
+            "count_in_beats_done": { "type": "number" },
+            "bars_done": { "type": "number" }
+          }
+        },
+        "diagnostics": {
+          "type": "object",
+          "properties": {
+            "late_start_suspected": { "type": "boolean" },
+            "missed_count_in": { "type": "boolean" },
+            "extra_bars_detected": { "type": "boolean" },
+            "tempo_mismatch": { "type": "boolean" },
+            "restart_detected": { "type": "boolean" },
+            "partial_take": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "TakeFinalized": {
+      "type": "object",
+      "description": "Finalized take packet ready for analysis.",
+      "required": ["type", "t_ms", "exercise_id", "take_id", "timing", "context", "events", "flags"],
+      "properties": {
+        "type": { "const": "TakeFinalized" },
+        "t_ms": { "type": "integer" },
+        "exercise_id": { "type": "string" },
+        "take_id": { "type": "string" },
+        "timing": {
+          "type": "object",
+          "required": ["take_start_ms", "count_in_start_ms", "play_start_ms", "expected_grid_start_ms", "expected_grid_end_ms", "finalize_reason"],
+          "properties": {
+            "take_start_ms": { "type": "integer" },
+            "count_in_start_ms": { "type": "integer" },
+            "play_start_ms": { "type": "integer" },
+            "expected_grid_start_ms": { "type": "integer" },
+            "expected_grid_end_ms": { "type": "integer" },
+            "finalize_reason": { "$ref": "#/$defs/FinalizeReason" }
+          }
+        },
+        "context": {
+          "type": "object",
+          "required": ["meter", "bars", "bpm_target", "bpm_tolerance", "subdivision", "count_in_beats", "pattern_id"],
+          "properties": {
+            "meter": { "$ref": "#/$defs/Meter" },
+            "bars": { "type": "integer" },
+            "bpm_target": { "type": "number" },
+            "bpm_tolerance": { "type": "number" },
+            "subdivision": { "$ref": "#/$defs/Subdivision" },
+            "count_in_beats": { "type": "integer" },
+            "pattern_id": { "type": "string" }
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/StrumEvent" }
+        },
+        "flags": {
+          "type": "object",
+          "required": ["late_start", "missed_count_in", "extra_events_after_end", "extra_bars", "partial_take", "tempo_mismatch", "restart_detected", "low_confidence_events"],
+          "properties": {
+            "late_start": { "type": "boolean" },
+            "missed_count_in": { "type": "boolean" },
+            "extra_events_after_end": { "type": "boolean" },
+            "extra_bars": { "type": "boolean" },
+            "partial_take": { "type": "boolean" },
+            "tempo_mismatch": { "type": "boolean" },
+            "restart_detected": { "type": "boolean" },
+            "low_confidence_events": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+
+    "TakeMetrics": {
+      "type": "object",
+      "description": "Computed metrics from take analysis.",
+      "required": ["hit_rate", "miss_rate", "extra_rate", "mean_offset_ms", "median_offset_ms", "std_offset_ms", "p90_abs_offset_ms", "drift_ms_per_bar", "stability"],
+      "properties": {
+        "hit_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "miss_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "extra_rate": { "type": "number", "minimum": 0 },
+        "mean_offset_ms": { "type": "number" },
+        "median_offset_ms": { "type": "number" },
+        "std_offset_ms": { "type": "number", "minimum": 0 },
+        "p90_abs_offset_ms": { "type": "number", "minimum": 0 },
+        "drift_ms_per_bar": { "type": "number" },
+        "stability": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+
+    "TakeAnalysis": {
+      "type": "object",
+      "description": "Complete analysis output for a finalized take.",
+      "required": ["type", "exercise_id", "take_id", "metrics", "grid", "alignment", "quality"],
+      "properties": {
+        "type": { "const": "TakeAnalysis" },
+        "exercise_id": { "type": "string" },
+        "take_id": { "type": "string" },
+        "metrics": { "$ref": "#/$defs/TakeMetrics" },
+        "grid": {
+          "type": "object",
+          "required": ["grid_start_ms", "slot_ms", "total_slots", "expected_slots"],
+          "properties": {
+            "grid_start_ms": { "type": "integer" },
+            "slot_ms": { "type": "number" },
+            "total_slots": { "type": "integer" },
+            "expected_slots": {
+              "type": "array",
+              "items": { "type": "integer" }
+            }
+          }
+        },
+        "alignment": {
+          "type": "object",
+          "required": ["matched", "missed_slots", "extra_seqs"],
+          "properties": {
+            "matched": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["slot"],
+                "properties": {
+                  "slot": { "type": "integer" },
+                  "seq": { "type": "integer" },
+                  "offset_ms": { "type": "number" }
+                }
+              }
+            },
+            "missed_slots": {
+              "type": "array",
+              "items": { "type": "integer" }
+            },
+            "extra_seqs": {
+              "type": "array",
+              "items": { "type": "integer" }
+            }
+          }
+        },
+        "quality": {
+          "type": "object",
+          "properties": {
+            "event_confidence_mean": { "type": "number", "minimum": 0, "maximum": 1 },
+            "analysis_confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      }
+    }
+  },
+
+  "oneOf": [
+    { "$ref": "#/$defs/StrumCandidate" },
+    { "$ref": "#/$defs/TakeStatus" },
+    { "$ref": "#/$defs/TakeFinalized" },
+    { "$ref": "#/$defs/TakeAnalysis" }
+  ]
+}

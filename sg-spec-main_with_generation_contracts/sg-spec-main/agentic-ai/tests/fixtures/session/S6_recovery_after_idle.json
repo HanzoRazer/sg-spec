@@ -1,0 +1,106 @@
+{
+  "id": "S6_recovery_after_idle",
+  "description": "After a long idle period, budget refills and guidance can resume",
+  "startMs": 2500000,
+  "rngSequence": [0.12, 0.34, 0.56, 0.78],
+  "steps": [
+    {
+      "label": "first_intervention",
+      "in": {
+        "at_ms": 2500000,
+        "mode": "PRACTICE",
+        "backoff": "L1",
+        "signals": {
+          "timeSinceLastNoteOnMs": 1400,
+          "phraseBoundaryDetected": true,
+          "timeSincePhraseBoundaryMs": 1200,
+          "ignoreStreak": 0,
+          "silencePreference": 0.2,
+          "userExplicitQuiet": false
+        }
+      },
+      "expect": {
+        "shouldInitiate": true
+      }
+    },
+    {
+      "label": "too_soon_10s",
+      "in": {
+        "at_ms": 2510000,
+        "mode": "PRACTICE",
+        "backoff": "L1",
+        "signals": {
+          "timeSinceLastNoteOnMs": 1400,
+          "phraseBoundaryDetected": true,
+          "timeSincePhraseBoundaryMs": 1200,
+          "ignoreStreak": 0,
+          "silencePreference": 0.2,
+          "userExplicitQuiet": false
+        }
+      },
+      "expect": {
+        "shouldInitiate": false
+      }
+    },
+    {
+      "label": "recovered_after_30s",
+      "in": {
+        "at_ms": 2530000,
+        "mode": "PRACTICE",
+        "backoff": "L1",
+        "signals": {
+          "timeSinceLastNoteOnMs": 1500,
+          "phraseBoundaryDetected": true,
+          "timeSincePhraseBoundaryMs": 1300,
+          "ignoreStreak": 0,
+          "silencePreference": 0.2,
+          "userExplicitQuiet": false
+        }
+      },
+      "expect": {
+        "shouldInitiate": true
+      }
+    },
+    {
+      "label": "recovered_after_60s",
+      "in": {
+        "at_ms": 2560000,
+        "mode": "PRACTICE",
+        "backoff": "L1",
+        "signals": {
+          "timeSinceLastNoteOnMs": 2000,
+          "phraseBoundaryDetected": true,
+          "timeSincePhraseBoundaryMs": 1800,
+          "ignoreStreak": 0,
+          "silencePreference": 0.2,
+          "userExplicitQuiet": false
+        }
+      },
+      "expect": {
+        "shouldInitiate": true
+      }
+    },
+    {
+      "label": "another_intervention_after_40s_more",
+      "in": {
+        "at_ms": 2600000,
+        "mode": "PRACTICE",
+        "backoff": "L1",
+        "signals": {
+          "timeSinceLastNoteOnMs": 1800,
+          "phraseBoundaryDetected": true,
+          "timeSincePhraseBoundaryMs": 1600,
+          "ignoreStreak": 0,
+          "silencePreference": 0.2,
+          "userExplicitQuiet": false
+        }
+      },
+      "expect": {
+        "shouldInitiate": true
+      }
+    }
+  ],
+  "aggregate": {
+    "minSpacingMs": 30000
+  }
+}

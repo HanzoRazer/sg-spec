@@ -1,0 +1,155 @@
+{
+  "objective": "FIX_REPEATABLE_SLOT_ERRORS",
+  "intent": "timing_centering",
+  "cue_key": "aim_center_of_click",
+  "analysis_confidence": 0.916,
+  "gradeability": "HIGH",
+  "suppressed": false,
+  "guidance": {
+    "shouldInitiate": true,
+    "reason": "ok",
+    "mode": "PRACTICE",
+    "backoff": "L0",
+    "modality": "visual"
+  },
+  "renderer": {
+    "type": "RendererEnvelope",
+    "payload_type": "PulsePayload",
+    "pulse_type": "subdivision",
+    "deliver_at_ms": 1019500,
+    "selected_modality": "visual"
+  },
+  "pulses": {
+    "count": 16,
+    "first_12": [
+      {
+        "time_ms": 1011500,
+        "slot_index_in_bar": 0,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.486
+      },
+      {
+        "time_ms": 1011875,
+        "slot_index_in_bar": 1,
+        "bar_index": 0,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1012250,
+        "slot_index_in_bar": 2,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1012625,
+        "slot_index_in_bar": 3,
+        "bar_index": 0,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1013000,
+        "slot_index_in_bar": 4,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1013375,
+        "slot_index_in_bar": 5,
+        "bar_index": 0,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1013750,
+        "slot_index_in_bar": 6,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1014125,
+        "slot_index_in_bar": 7,
+        "bar_index": 0,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1014500,
+        "slot_index_in_bar": 0,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.486
+      },
+      {
+        "time_ms": 1014875,
+        "slot_index_in_bar": 1,
+        "bar_index": 1,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1015250,
+        "slot_index_in_bar": 2,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1015625,
+        "slot_index_in_bar": 3,
+        "bar_index": 1,
+        "is_accented": false,
+        "effective_gain": 0.36
+      }
+    ],
+    "last_4": [
+      {
+        "time_ms": 1016000,
+        "slot_index_in_bar": 4,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1016375,
+        "slot_index_in_bar": 5,
+        "bar_index": 1,
+        "is_accented": false,
+        "effective_gain": 0.36
+      },
+      {
+        "time_ms": 1016750,
+        "slot_index_in_bar": 6,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.432
+      },
+      {
+        "time_ms": 1017125,
+        "slot_index_in_bar": 7,
+        "bar_index": 1,
+        "is_accented": false,
+        "effective_gain": 0.36
+      }
+    ],
+    "accent_slots_by_bar": {
+      "0": [
+        0,
+        2,
+        4,
+        6
+      ],
+      "1": [
+        0,
+        2,
+        4,
+        6
+      ]
+    }
+  }
+}

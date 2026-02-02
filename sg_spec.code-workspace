@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "sg_spec"
+		},
+		{
+			"path": "../sg-coach"
+		},
+		{
+			"path": "../string_master_v.4.0"
+		},
+		{
+			"path": "../ai-integrator"
+		},
+		{
+			"path": "../luthiers-toolbox"
+		}
+	],
+	"settings": {}
+}

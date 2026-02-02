@@ -1,0 +1,95 @@
+{
+  "objective": "STABILIZE_TEMPO_DRIFT",
+  "intent": "backbeat_anchor",
+  "cue_key": "emphasize_2_and_4",
+  "analysis_confidence": 0.91,
+  "gradeability": "HIGH",
+  "suppressed": false,
+  "guidance": {
+    "shouldInitiate": true,
+    "reason": "ok",
+    "mode": "PRACTICE",
+    "backoff": "L1",
+    "modality": "haptic"
+  },
+  "renderer": {
+    "type": "RendererEnvelope",
+    "payload_type": "PulsePayload",
+    "pulse_type": "backbeat",
+    "deliver_at_ms": 1009100,
+    "selected_modality": "haptic"
+  },
+  "pulses": {
+    "count": 4,
+    "first_12": [
+      {
+        "time_ms": 1002250,
+        "slot_index_in_bar": 2,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.609
+      },
+      {
+        "time_ms": 1003750,
+        "slot_index_in_bar": 6,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.609
+      },
+      {
+        "time_ms": 1005250,
+        "slot_index_in_bar": 2,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.609
+      },
+      {
+        "time_ms": 1006750,
+        "slot_index_in_bar": 6,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.609
+      }
+    ],
+    "last_4": [
+      {
+        "time_ms": 1002250,
+        "slot_index_in_bar": 2,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.609
+      },
+      {
+        "time_ms": 1003750,
+        "slot_index_in_bar": 6,
+        "bar_index": 0,
+        "is_accented": true,
+        "effective_gain": 0.609
+      },
+      {
+        "time_ms": 1005250,
+        "slot_index_in_bar": 2,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.609
+      },
+      {
+        "time_ms": 1006750,
+        "slot_index_in_bar": 6,
+        "bar_index": 1,
+        "is_accented": true,
+        "effective_gain": 0.609
+      }
+    ],
+    "accent_slots_by_bar": {
+      "0": [
+        2,
+        6
+      ],
+      "1": [
+        2,
+        6
+      ]
+    }
+  }
+}

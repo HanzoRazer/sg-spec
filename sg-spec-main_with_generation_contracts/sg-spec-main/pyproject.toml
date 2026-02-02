@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sg-spec"
+version = "2.0.0"
+description = "String Master Smart Guitar - Contract Specifications + AI Coach"
+readme = "README.md"
+license = {text = "Proprietary"}
+requires-python = ">=3.9"
+authors = [
+    {name = "HanzoRazer"}
+]
+keywords = ["smart-guitar", "iot", "contracts", "schemas", "ai", "coach", "practice"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.0.0",
+]
+
+[project.scripts]
+sgc = "sg_spec.ai.coach.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/HanzoRazer/sg-spec"
+Repository = "https://github.com/HanzoRazer/sg-spec"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sg_spec*"]
+
+[tool.setuptools.package-data]
+sg_spec = ["py.typed", "ai/coach/fixtures/**/*.json"]

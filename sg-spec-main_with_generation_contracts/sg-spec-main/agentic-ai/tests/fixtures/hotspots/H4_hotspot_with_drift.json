@@ -1,0 +1,95 @@
+{
+  "id": "H4_hotspot_with_drift",
+  "description": "Offbeat hotspot exists BUT drift > 30ms/bar -> drift dominates, STABILIZE_TEMPO_DRIFT takes priority",
+  "now_ms": 1015000,
+  "musical": {
+    "bpm": 80,
+    "meter": "4/4",
+    "bars": 2,
+    "subdivision": "8n",
+    "grid_start_ms": 1001500,
+    "slot_ms": 375
+  },
+  "takeAnalysis": {
+    "type": "TakeAnalysis",
+    "exercise_id": "2bar_eighth_down",
+    "take_id": "take_H4",
+    "metrics": {
+      "hit_rate": 0.875,
+      "miss_rate": 0.125,
+      "extra_rate": 0.08,
+      "mean_offset_ms": 60,
+      "median_offset_ms": 55,
+      "std_offset_ms": 30,
+      "p90_abs_offset_ms": 95,
+      "drift_ms_per_bar": 45,
+      "stability": 0.60
+    },
+    "grid": {
+      "grid_start_ms": 1001500,
+      "slot_ms": 375,
+      "total_slots": 16,
+      "expected_slots": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+    },
+    "alignment": {
+      "matched": [
+        { "slot": 0, "seq": 401, "offset_ms": 15 },
+        { "slot": 2, "seq": 402, "offset_ms": 22 },
+        { "slot": 3, "seq": 403, "offset_ms": 30 },
+        { "slot": 4, "seq": 404, "offset_ms": 38 },
+        { "slot": 5, "seq": 405, "offset_ms": 45 },
+        { "slot": 6, "seq": 406, "offset_ms": 52 },
+        { "slot": 7, "seq": 407, "offset_ms": 60 },
+        { "slot": 8, "seq": 408, "offset_ms": 68 },
+        { "slot": 10, "seq": 409, "offset_ms": 75 },
+        { "slot": 11, "seq": 410, "offset_ms": 78 },
+        { "slot": 12, "seq": 411, "offset_ms": 80 },
+        { "slot": 13, "seq": 412, "offset_ms": 82 },
+        { "slot": 14, "seq": 413, "offset_ms": 85 },
+        { "slot": 15, "seq": 414, "offset_ms": 88 }
+      ],
+      "missed_slots": [1, 9],
+      "extra_seqs": []
+    },
+    "quality": {
+      "event_confidence_mean": 0.82,
+      "analysis_confidence": 0.78
+    }
+  },
+  "segmenterFlags": {
+    "late_start": false,
+    "missed_count_in": false,
+    "extra_events_after_end": false,
+    "extra_bars": false,
+    "partial_take": false,
+    "tempo_mismatch": false,
+    "restart_detected": false,
+    "low_confidence_events": 0
+  },
+  "finalize_reason": "GRID_COMPLETE",
+  "userSignals": {
+    "mode": "PRACTICE",
+    "backoff": "L1",
+    "timeSinceLastNoteOnMs": 1600,
+    "phraseBoundaryDetected": true,
+    "timeSincePhraseBoundaryMs": 1400,
+    "ignoreStreak": 0,
+    "silencePreference": 0.3,
+    "userExplicitQuiet": false
+  },
+  "policyConfig": {
+    "minPauseMs": 900,
+    "betweenPhraseOnly": true,
+    "interruptBudgetPerMin": 1.5
+  },
+  "deviceCapabilities": {
+    "modalitiesAvailable": ["haptic", "visual"]
+  },
+  "expected": {
+    "objective": "STABILIZE_TEMPO_DRIFT",
+    "intent": "backbeat_anchor",
+    "cue_key": "feel_two_and_four",
+    "hotspot_kind": "offbeats",
+    "notes": "Drift (45ms/bar > 30ms threshold) dominates over the offbeat hotspot. Player needs to anchor on backbeat first."
+  }
+}

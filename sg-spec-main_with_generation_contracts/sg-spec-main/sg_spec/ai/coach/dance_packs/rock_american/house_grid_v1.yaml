@@ -1,0 +1,93 @@
+# House Grid v1 — Canonical Dance Pack
+# Electronic: grid-tight house with repetition-based learning
+
+schema_id: dance_pack
+schema_version: v1
+
+metadata:
+  id: house_grid_v1
+  display_name: "House (Grid-Locked)"
+  dance_family: fusion
+  version: "1.0.0"
+  author: system
+  license: core
+  engine_compatibility: ">=0.2.0"
+  tags: [electronic, house, grid, four_on_floor]
+
+groove:
+  meter: "4/4"
+  cycle_bars: 8
+  subdivision: binary
+  tempo_range_bpm: [118, 132]
+  swing_ratio: 0.0
+  accent_grid:
+    strong_beats: [1, 2, 3, 4]  # Four-on-the-floor: all beats equal
+    secondary_beats: []
+    ghost_allowed: false
+    offbeat_emphasis: 0.5
+  clave:
+    type: none
+    pattern: []
+    direction: forward
+
+harmony_constraints:
+  harmonic_rhythm:
+    max_changes_per_cycle: 2
+    min_beats_between_changes: 8
+    change_on_strong_beat: required
+  dominant_behavior:
+    allowed: false  # House typically avoids functional harmony
+    resolution_strength: none
+    secondary_dominants: false
+  tritone_usage:
+    allowed: false
+    weight: none
+    forbidden_on_beats: []
+  chromatic_drift:
+    allowed: false
+    max_semitones: 0
+  modal_constraints:
+    parallel_minor_allowed: false
+    modal_interchange_level: none
+
+performance_profile:
+  velocity_range:
+    min: 90
+    max: 100  # Very tight velocity range for grid precision
+    ghost_max: 20
+    accent_min: 95
+  pickup_bias:
+    probability: 0.0  # No pickups - grid-locked
+    max_offset_beats: 0.0
+  contour_preference:
+    stepwise_weight: 0.8
+    leap_weight: 0.2
+    max_leap_interval: 3
+  ornament_density: none
+  register_bias: mid
+  articulation:
+    default_duration_ratio: 0.95
+    staccato_probability: 0.0
+    legato_probability: 0.8
+
+practice_mapping:
+  primary_focus:
+    - timing_accuracy
+    - groove_lock
+  evaluation_weights:
+    timing_accuracy: 0.70
+    harmonic_choice: 0.05
+    dynamic_control: 0.15
+    groove_feel: 0.10
+  common_errors:
+    - rushed_tempo
+    - dragged_tempo
+    - lost_pulse
+  difficulty_rating: easy
+  prerequisite_forms: []
+
+extensions:
+  house_specific:
+    quantize_tolerance_ms: 5
+    repetition_encouraged: true
+    build_drop_structure: true

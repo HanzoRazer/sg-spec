@@ -1,0 +1,95 @@
+{
+  "id": "H3_no_hotspot",
+  "description": "Random misses scattered (slots 2 and 11 -> indices 2 and 3) - no concentration -> falls back to stability-based coaching",
+  "now_ms": 1015000,
+  "musical": {
+    "bpm": 80,
+    "meter": "4/4",
+    "bars": 2,
+    "subdivision": "8n",
+    "grid_start_ms": 1001500,
+    "slot_ms": 375
+  },
+  "takeAnalysis": {
+    "type": "TakeAnalysis",
+    "exercise_id": "2bar_eighth_down",
+    "take_id": "take_H3",
+    "metrics": {
+      "hit_rate": 0.875,
+      "miss_rate": 0.125,
+      "extra_rate": 0.05,
+      "mean_offset_ms": 10,
+      "median_offset_ms": 8,
+      "std_offset_ms": 22,
+      "p90_abs_offset_ms": 48,
+      "drift_ms_per_bar": 12,
+      "stability": 0.60
+    },
+    "grid": {
+      "grid_start_ms": 1001500,
+      "slot_ms": 375,
+      "total_slots": 16,
+      "expected_slots": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+    },
+    "alignment": {
+      "matched": [
+        { "slot": 0, "seq": 301, "offset_ms": 5 },
+        { "slot": 1, "seq": 302, "offset_ms": -8 },
+        { "slot": 3, "seq": 303, "offset_ms": 12 },
+        { "slot": 4, "seq": 304, "offset_ms": -6 },
+        { "slot": 5, "seq": 305, "offset_ms": 10 },
+        { "slot": 6, "seq": 306, "offset_ms": -15 },
+        { "slot": 7, "seq": 307, "offset_ms": 8 },
+        { "slot": 8, "seq": 308, "offset_ms": -10 },
+        { "slot": 9, "seq": 309, "offset_ms": 14 },
+        { "slot": 10, "seq": 310, "offset_ms": -5 },
+        { "slot": 12, "seq": 311, "offset_ms": 6 },
+        { "slot": 13, "seq": 312, "offset_ms": -12 },
+        { "slot": 14, "seq": 313, "offset_ms": 5 },
+        { "slot": 15, "seq": 314, "offset_ms": 8 }
+      ],
+      "missed_slots": [2, 11],
+      "extra_seqs": []
+    },
+    "quality": {
+      "event_confidence_mean": 0.86,
+      "analysis_confidence": 0.82
+    }
+  },
+  "segmenterFlags": {
+    "late_start": false,
+    "missed_count_in": false,
+    "extra_events_after_end": false,
+    "extra_bars": false,
+    "partial_take": false,
+    "tempo_mismatch": false,
+    "restart_detected": false,
+    "low_confidence_events": 0
+  },
+  "finalize_reason": "GRID_COMPLETE",
+  "userSignals": {
+    "mode": "PRACTICE",
+    "backoff": "L1",
+    "timeSinceLastNoteOnMs": 1600,
+    "phraseBoundaryDetected": true,
+    "timeSincePhraseBoundaryMs": 1400,
+    "ignoreStreak": 0,
+    "silencePreference": 0.3,
+    "userExplicitQuiet": false
+  },
+  "policyConfig": {
+    "minPauseMs": 900,
+    "betweenPhraseOnly": true,
+    "interruptBudgetPerMin": 1.5
+  },
+  "deviceCapabilities": {
+    "modalitiesAvailable": ["haptic", "visual"]
+  },
+  "expected": {
+    "objective": "TIGHTEN_SUBDIVISION",
+    "intent": "subdivision_support",
+    "cue_key": "subdivision_pulse_enabled",
+    "hotspot_kind": null,
+    "notes": "Slot 2 -> index 2, slot 11 -> index 3. Different indices = 50% concentration each, below 0.50 threshold. Stability 0.60 < 0.70 triggers TIGHTEN_SUBDIVISION."
+  }
+}

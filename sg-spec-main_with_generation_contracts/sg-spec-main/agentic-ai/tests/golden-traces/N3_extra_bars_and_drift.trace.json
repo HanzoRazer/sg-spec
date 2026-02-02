@@ -1,0 +1,23 @@
+{
+  "objective": "MATCH_EXERCISE_LENGTH",
+  "intent": "clarify_exercise_length",
+  "cue_key": "stop_after_two_bars",
+  "analysis_confidence": 0.545,
+  "gradeability": "LOW",
+  "suppressed": true,
+  "guidance": {
+    "shouldInitiate": true,
+    "reason": "ok",
+    "mode": "PRACTICE",
+    "backoff": "L1",
+    "modality": "haptic"
+  },
+  "renderer": {
+    "type": "RendererEnvelope",
+    "payload_type": "TextPromptPayload",
+    "pulse_type": null,
+    "deliver_at_ms": 1012000,
+    "selected_modality": "haptic"
+  },
+  "pulses": null
+}
