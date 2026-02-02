@@ -20,7 +20,7 @@ Notes:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -37,6 +37,10 @@ class HarmonySpec(BaseModel):
     chord_symbols: List[str] = Field(min_length=1)
     key: Optional[str] = None
     bars_per_chord: int = Field(default=1, ge=1)
+    meter: Tuple[int, int] = Field(
+        default=(4, 4),
+        description="Time signature (numerator, denominator). Phase 6.0+",
+    )
 
 
 class StyleSpec(BaseModel):

@@ -315,6 +315,13 @@ class AssignmentConstraints(BaseModel):
     bars_per_loop: int = Field(ge=1, le=16)
     repetitions: int = Field(ge=1, le=999)
 
+    pitch_range_semitones: int = Field(
+        default=24,
+        ge=6,
+        le=48,
+        description="Max melodic span allowed",
+    )
+
     @model_validator(mode="after")
     def _tempo_ramp(self) -> "AssignmentConstraints":
         if self.tempo_target < self.tempo_start:

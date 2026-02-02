@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -243,6 +243,12 @@ class RegenerationRequestV1(BaseModel):
     immediate: bool = Field(
         default=False,
         description="True = replace current clip, False = queue for next bar"
+    )
+
+    # Time signature (Phase 6.0+)
+    meter: Tuple[int, int] = Field(
+        default=(4, 4),
+        description="Time signature (numerator, denominator)"
     )
 
     # Optional overrides (bypasses policy for manual control)
