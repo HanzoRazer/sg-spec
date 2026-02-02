@@ -19,6 +19,9 @@ Usage:
 
     # Technique sidecar
     from sg_spec.schemas.technique_sidecar import TechniqueSidecar, TechniqueAnnotation
+
+    # Adaptive feedback (Phase 5)
+    from sg_spec.schemas.adaptive_feedback import AdaptiveFeedbackV1, DiagnosisCode
 """
 
 from .smart_guitar import *
@@ -27,5 +30,6 @@ from .groove_layer import *
 from .clip_bundle import *
 from .generation import *
 from .technique_sidecar import *
+from .adaptive_feedback import *
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
