@@ -22,6 +22,9 @@ Usage:
 
     # Adaptive feedback (Phase 5)
     from sg_spec.schemas.adaptive_feedback import AdaptiveFeedbackV1, DiagnosisCode
+
+    # Practice assignment (Phase 5.2)
+    from sg_spec.schemas.practice_assignment import PracticeAssignmentDoc
 """
 
 from .smart_guitar import *
@@ -31,5 +34,6 @@ from .clip_bundle import *
 from .generation import *
 from .technique_sidecar import *
 from .adaptive_feedback import *
+from .practice_assignment import *
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
