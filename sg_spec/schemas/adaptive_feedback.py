@@ -190,6 +190,118 @@ class AdaptiveFeedbackV1(BaseModel):
     extensions: Dict[str, Any] = Field(default_factory=dict)
 
 
+class AdjustableParam(str, Enum):
+    """Parameters that can be auto-adjusted by policy."""
+    DENSITY = "density"
+    SYNCOPATION = "syncopation"
+    # Future (Phase 6+):
+    # TEMPO = "tempo"
+    # TRITONE_PROBABILITY = "tritone_probability"
+    # BACKDOOR_PROBABILITY = "backdoor_probability"
+
+
+class RegenerationRequestV1(BaseModel):
+    """
+    MVP regeneration request for adaptive loop.
+
+    This is the simpler input contract for Phase 5:
+    - Manual difficulty knob from DAW → difficulty_signal
+    - Later: sg-coach can emit this from CoachEvaluation
+
+    Endpoint: POST /regenerate
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    schema_id: Literal["regeneration_request"] = "regeneration_request"
+    schema_version: Literal["v1"] = "v1"
+
+    # Session context
+    session_id: str = Field(
+        ..., min_length=1,
+        description="Active session ID for clip placement"
+    )
+
+    # Source clip (what we're adapting from)
+    parent_clip_id: Optional[str] = Field(
+        default=None,
+        description="Clip to regenerate from (None = fresh generation)"
+    )
+
+    # MVP manual control: 0.0 = easy, 1.0 = hard
+    difficulty_signal: float = Field(
+        default=0.5, ge=0.0, le=1.0,
+        description="Difficulty from DAW knob or CoachEvaluation"
+    )
+
+    # Which params can policy auto-adjust?
+    adjustable_params: List[AdjustableParam] = Field(
+        default_factory=lambda: [AdjustableParam.DENSITY, AdjustableParam.SYNCOPATION],
+        description="Parameters policy is allowed to change"
+    )
+
+    # Delivery mode
+    immediate: bool = Field(
+        default=False,
+        description="True = replace current clip, False = queue for next bar"
+    )
+
+    # Optional overrides (bypasses policy for manual control)
+    override_density: Optional[Literal["sparse", "normal", "dense"]] = Field(
+        default=None, description="Manual density override (bypasses policy)"
+    )
+    override_syncopation: Optional[float] = Field(
+        default=None, ge=0.0, le=1.0,
+        description="Manual syncopation level (bypasses policy)"
+    )
+    override_tempo_bpm: Optional[float] = Field(
+        default=None, ge=40.0, le=300.0,
+        description="Manual tempo override (bypasses policy)"
+    )
+
+    # Provenance
+    requester: str = Field(
+        default="daw",
+        description="Who sent this request (daw, sg-coach, cli)"
+    )
+
+    # Forward compatibility
+    extensions: Dict[str, Any] = Field(default_factory=dict)
+
+
+class RegenerationResponseV1(BaseModel):
+    """
+    Response from /regenerate endpoint.
+
+    Contains the new clip reference for DAW to import.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    schema_id: Literal["regeneration_response"] = "regeneration_response"
+    schema_version: Literal["v1"] = "v1"
+
+    # Result
+    clip_id: str = Field(..., description="New clip ID")
+    bundle_dir: str = Field(..., description="Path to clip bundle directory")
+
+    # What policy decided
+    applied_density: Literal["sparse", "normal", "dense"]
+    applied_syncopation: float = Field(..., ge=0.0, le=1.0)
+    applied_tempo_bpm: float
+
+    # Lineage
+    parent_clip_id: Optional[str] = Field(default=None)
+    generation_number: int = Field(default=1, ge=1)
+
+    # Delivery info
+    queued: bool = Field(
+        default=True,
+        description="True if queued for next bar, False if immediate"
+    )
+
+    # Forward compatibility
+    extensions: Dict[str, Any] = Field(default_factory=dict)
+
+
 class RegenerationLineage(BaseModel):
     """
     Lineage information for regenerated clips.
@@ -228,5 +340,8 @@ __all__ = [
     "PerformanceMetrics",
     "RecommendedAdjustments",
     "AdaptiveFeedbackV1",
+    "AdjustableParam",
+    "RegenerationRequestV1",
+    "RegenerationResponseV1",
     "RegenerationLineage",
 ]
