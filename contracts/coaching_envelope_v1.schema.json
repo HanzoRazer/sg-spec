@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "coaching_envelope_v1",
+  "title": "Coaching Envelope v1",
+  "description": "Transport envelope containing deterministic coaching (always present) and optional AI addendum. Used for API responses and inter-service communication.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "schema_version",
+    "source",
+    "deterministic"
+  ],
+  "properties": {
+    "schema_id": {
+      "const": "coaching_envelope",
+      "description": "Schema identifier"
+    },
+    "schema_version": {
+      "const": "v1",
+      "description": "Schema version"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["deterministic", "hybrid"],
+      "description": "Indicates whether AI addendum is present. 'deterministic' = no AI, 'hybrid' = AI addendum included"
+    },
+    "deterministic": {
+      "$ref": "coaching_deterministic_v1.schema.json",
+      "description": "ALWAYS PRESENT. The authoritative coaching decision from embedded progression policy."
+    },
+    "ai": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "coaching_ai_addendum_v1.schema.json" }
+      ],
+      "description": "OPTIONAL. AI coaching addendum. Only present when source='hybrid' and AI responded within 500ms budget."
+    },
+    "ai_request_status": {
+      "type": ["string", "null"],
+      "enum": ["not_requested", "success", "timeout", "error", "disabled", null],
+      "description": "Status of AI request attempt (for diagnostics)"
+    },
+    "total_latency_ms": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Total time from score computation to envelope emission (ms)"
+    }
+  }
+}

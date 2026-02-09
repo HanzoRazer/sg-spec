@@ -25,6 +25,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+# Import coach schema for assignment field (runtime required for Pydantic)
+from sg_spec.ai.coach.schemas import PracticeAssignment  # noqa: F401
+
 
 # =============================================================================
 # Request (what we want)
@@ -68,6 +71,12 @@ class GenerationConstraints(BaseModel):
     attempt_budget: int = Field(default=1, ge=1, le=10)
     require_determinism: bool = True
     validate_contract: bool = True
+    pitch_range_semitones: int = Field(
+        default=24,
+        ge=6,
+        le=48,
+        description="Max melodic span allowed",
+    )
 
 
 class GenerationRequest(BaseModel):
@@ -92,6 +101,12 @@ class GenerationRequest(BaseModel):
     # Provenance / correlation (optional links into coaching intent)
     requester: str = Field(min_length=1, description="Agent or user ID")
     intent_id: Optional[str] = Field(default=None, description="Link to GrooveControlIntentV1 or other intent")  # noqa: E501
+
+    # Coaching integration (optional)
+    assignment: Optional["PracticeAssignment"] = Field(
+        default=None,
+        description="Practice assignment from sg-coach (drives clip.coach.json emission)",
+    )
 
     extensions: Dict[str, Any] = Field(default_factory=dict)
 
@@ -161,6 +176,7 @@ class GenerationResult(BaseModel):
     tags: Optional[JsonArtifact] = None
     runlog: Optional[JsonArtifact] = None
     coach: Optional[JsonArtifact] = None
+    bundle_manifest: Optional[JsonArtifact] = None
 
     validation: ValidationReport
     run_log: RunLog
@@ -168,7 +184,8 @@ class GenerationResult(BaseModel):
     error_code: Optional[str] = None
     error_message: Optional[str] = None
 
-    bundle_path: Optional[str] = Field(default=None, description="Folder containing the 4-file bundle")
+    bundle_dir: Optional[str] = Field(default=None, description="Directory containing the bundle artifacts")
+    bundle_path: Optional[str] = Field(default=None, description="[Deprecated] Legacy alias for bundle_dir")
 
     extensions: Dict[str, Any] = Field(default_factory=dict)
 

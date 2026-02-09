@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "coaching_deterministic_v1",
+  "title": "Deterministic Coaching Response v1",
+  "description": "Authoritative coaching decision from embedded progression policy. Always present, never depends on network. This is the PRIMARY coaching output.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "schema_version",
+    "session_id",
+    "clip_id",
+    "created_at_utc",
+    "score",
+    "take_result",
+    "policy_id",
+    "decision",
+    "coach_hint"
+  ],
+  "properties": {
+    "schema_id": {
+      "const": "coaching_deterministic",
+      "description": "Schema identifier"
+    },
+    "schema_version": {
+      "const": "v1",
+      "description": "Schema version"
+    },
+    "session_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Locally-generated session identifier (Pi 5 generates, persists locally)"
+    },
+    "clip_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique identifier for this practice clip/take"
+    },
+    "created_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when coaching was generated"
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Composite performance score (0-100). This is the AUTHORITATIVE score."
+    },
+    "take_result": {
+      "type": "string",
+      "enum": ["pass", "struggle", "fail"],
+      "description": "Categorical result of the take"
+    },
+    "policy_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Progression policy used (e.g., v1_default, v1_jazz, v1_classical)"
+    },
+    "score_trend": {
+      "type": ["number", "null"],
+      "description": "EMA-based trend from recent sessions. Positive = improving, negative = declining."
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["difficulty_delta", "tempo_delta_bpm", "density_bucket", "syncopation_bucket"],
+      "description": "Progression adjustments for next iteration",
+      "properties": {
+        "difficulty_delta": {
+          "type": "number",
+          "minimum": -0.1,
+          "maximum": 0.1,
+          "description": "Difficulty adjustment (-0.05 to +0.05 typical)"
+        },
+        "tempo_delta_bpm": {
+          "type": "number",
+          "minimum": -10,
+          "maximum": 10,
+          "description": "Tempo adjustment in BPM (-5 to +3 typical)"
+        },
+        "density_bucket": {
+          "type": "string",
+          "enum": ["sparse", "medium", "dense"],
+          "description": "Note density level for next iteration"
+        },
+        "syncopation_bucket": {
+          "type": "string",
+          "enum": ["straight", "light", "heavy"],
+          "description": "Syncopation level for next iteration"
+        }
+      }
+    },
+    "coach_hint": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "User-facing coaching message (from 15-template deterministic matrix)"
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Internal logging rationale (not user-facing)"
+    }
+  }
+}

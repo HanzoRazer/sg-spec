@@ -20,7 +20,7 @@ try:
 except ImportError:
     HAS_JSONSCHEMA = False
 
-CONTRACTS_DIR = Path(__file__).parent.parent.parent.parent / "contracts"
+CONTRACTS_DIR = Path(__file__).parent.parent.parent / "contracts"
 MANIFEST_SCHEMA_PATH = CONTRACTS_DIR / "ota_bundle_manifest_v1.schema.json"
 WRAPPER_SCHEMA_PATH = CONTRACTS_DIR / "ota_multi_pack_bundle_v1.schema.json"
 
@@ -122,10 +122,10 @@ class TestSinglePackMode:
     def test_single_pack_by_path(self, tmp_path: Path):
         """--dance-pack-path with valid YAML produces single-pack manifest."""
         # Use a bundled pack path
-        from sg_spec.ai.coach.dance_pack import list_pack_paths
+        from sg_spec.ai.coach.dance_pack import list_pack_paths, _get_dance_packs_dir
         pack_paths = list_pack_paths()
         assert len(pack_paths) > 0
-        pack_path = pack_paths[0]
+        pack_path = _get_dance_packs_dir() / pack_paths[0]
 
         ret = sgc_main([
             "ota-bundle",
@@ -196,9 +196,10 @@ class TestPackSetMode:
     def test_pack_set_by_path(self, tmp_path: Path):
         """--dance-pack-set-path with valid YAML works."""
         from sg_spec.ai.coach.dance_pack_set import list_set_paths
+        from importlib import resources
         set_paths = list_set_paths()
         assert len(set_paths) > 0
-        set_path = set_paths[0]
+        set_path = resources.files("sg_spec.ai.coach.pack_sets") / set_paths[0]
 
         ret = sgc_main([
             "ota-bundle",
@@ -364,8 +365,8 @@ class TestDeterministicNaming:
         a2 = json.loads((bundle2 / "assignment.json").read_text())
 
         # UUIDs should be identical (deterministic from pack_id)
-        assert a1["assignment_id"] == a2["assignment_id"]
-        assert a1["session_id"] == a2["session_id"]
+        assert a1["payload"]["assignment_id"] == a2["payload"]["assignment_id"]
+        assert a1["payload"]["session_id"] == a2["payload"]["session_id"]
 
 
 # =============================================================================
@@ -463,7 +464,7 @@ class TestManifestSchemaValidation:
         schema_content = MANIFEST_SCHEMA_PATH.read_bytes()
         computed = hashlib.sha256(schema_content).hexdigest()
 
-        sha_path = MANIFEST_SCHEMA_PATH.with_suffix(".json.sha256")
+        sha_path = MANIFEST_SCHEMA_PATH.with_suffix(".sha256")
         assert sha_path.exists(), f"SHA256 sidecar not found: {sha_path}"
         expected = sha_path.read_text().strip()
 
@@ -549,7 +550,7 @@ class TestWrapperManifestContract:
 
             # manifest should be valid JSON
             manifest_content = json.loads(manifest_file.read_text())
-            assert "schema_id" in manifest_content
+            assert "contract" in manifest_content
 
     def test_wrapper_manifest_paths_no_traversal(self, tmp_path: Path):
         """Wrapper manifest paths don't escape the bundle directory."""
@@ -588,7 +589,7 @@ class TestWrapperManifestContract:
         schema_content = WRAPPER_SCHEMA_PATH.read_bytes()
         computed = hashlib.sha256(schema_content).hexdigest()
 
-        sha_path = WRAPPER_SCHEMA_PATH.with_suffix(".json.sha256")
+        sha_path = WRAPPER_SCHEMA_PATH.with_suffix(".sha256")
         assert sha_path.exists(), f"SHA256 sidecar not found: {sha_path}"
         expected = sha_path.read_text().strip()
 

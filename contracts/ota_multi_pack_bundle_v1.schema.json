@@ -36,6 +36,10 @@
             "minLength": 1,
             "description": "Dance pack ID for this sub-bundle"
           },
+          "display_name": {
+            "type": "string",
+            "description": "Human-readable name for this dance pack"
+          },
           "sub_bundle_dir": {
             "type": "string",
             "minLength": 1,

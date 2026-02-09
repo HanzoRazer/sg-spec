@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "coaching_ai_addendum_v1",
+  "title": "AI Coaching Addendum v1",
+  "description": "Optional AI-generated coaching enhancement. NEVER required. NEVER replaces deterministic coaching. Only appended if available within 500ms latency budget.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "schema_version",
+    "clip_id",
+    "ai_available",
+    "ai_latency_ms",
+    "model_id"
+  ],
+  "properties": {
+    "schema_id": {
+      "const": "coaching_ai_addendum",
+      "description": "Schema identifier"
+    },
+    "schema_version": {
+      "const": "v1",
+      "description": "Schema version"
+    },
+    "clip_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Clip ID this addendum relates to (must match deterministic clip_id)"
+    },
+    "ai_available": {
+      "type": "boolean",
+      "description": "Whether AI service was reachable"
+    },
+    "ai_latency_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Round-trip latency to AI service in milliseconds"
+    },
+    "model_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+:[a-z0-9_.-]+@[a-z0-9_.-]+$",
+      "description": "Provider-agnostic model identifier. Format: provider:model@version (e.g., anthropic:claude-3-haiku@20240307)"
+    },
+    "coaching_tip": {
+      "type": ["string", "null"],
+      "maxLength": 300,
+      "description": "Specific coaching insight from AI (e.g., 'You're consistently late on beat 2')"
+    },
+    "timing_insight": {
+      "type": ["string", "null"],
+      "maxLength": 300,
+      "description": "Detailed timing analysis (e.g., 'Beat 2 averages +17ms late')"
+    },
+    "exercise_hint": {
+      "type": ["string", "null"],
+      "maxLength": 300,
+      "description": "Suggested practice exercise (e.g., 'Beat 2 Lock Drill: quarter notes on beat 2 only')"
+    },
+    "ai_groove_score": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Optional AI-computed groove score. NOT authoritative - deterministic score is primary."
+    },
+    "ai_groove_breakdown": {
+      "type": ["object", "null"],
+      "description": "Optional breakdown of AI groove score",
+      "properties": {
+        "timing": { "type": "number", "minimum": 0, "maximum": 1 },
+        "dynamics": { "type": "number", "minimum": 0, "maximum": 1 },
+        "feel": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "confidence": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1,
+      "description": "AI confidence in its coaching tip (0.0-1.0)"
+    },
+    "queued": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this response arrived after 500ms deadline and was queued for next cycle"
+    },
+    "queued_at_utc": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "When this addendum was queued (if queued=true)"
+    }
+  }
+}
