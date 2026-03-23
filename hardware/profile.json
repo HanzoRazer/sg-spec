@@ -1,31 +1,39 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Smart Guitar Hardware Profile",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Capability descriptors for Smart Guitar",
-
   "audio": {
     "mode": "practice_and_performance",
     "quality": "high_resolution",
-    "latency": "low"
+    "latency": "low",
+    "signal_chain_version": "2.0",
+    "input_interface": "hi_z_usb_scarlett_solo",
+    "input_interface_alt": "ik_axe_io_one",
+    "processing_host": "raspberry_pi_5",
+    "processing_software": "jack_guitarix_modep",
+    "output_hat": "hifiberry_dac_adc",
+    "output_wifi": true,
+    "wifi_protocol": "pipewire_network_sink",
+    "latency_target_ms": 5,
+    "latency_actual_ms": 3.1,
+    "latency_max_ms": 10
   },
-
   "connectivity": {
     "wired": true,
     "wireless": true,
-    "midi": true
+    "midi": true,
+    "wifi_audio": true,
+    "pipewire": true
   },
-
   "compute": {
     "profile": "embedded_host",
     "local_processing": true
   },
-
   "power": {
     "type": "battery",
     "runtime": "extended"
   },
-
   "features": {
     "temperament_support": true,
     "led_markers": true,
@@ -34,7 +42,6 @@
     "midi_output": true,
     "firmware_updates": true
   },
-
   "model_variants": [
     {
       "id": "headed",

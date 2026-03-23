@@ -3,7 +3,6 @@
   "schema_version": "1.0.0",
   "generated": "2026-01-29T00:00:00Z",
   "description": "Smart Guitar cavity layout derived from Les Paul body geometry with electronics stack accommodation",
-
   "base_model": {
     "id": "les_paul",
     "display_name": "Gibson Les Paul",
@@ -11,7 +10,6 @@
     "category": "electric_guitar",
     "source": "luthiers-toolbox/instrument_geometry"
   },
-
   "body_geometry": {
     "outline_source": "luthiers-toolbox:body/dxf/electric/LesPaul_body.dxf",
     "point_count": 669,
@@ -29,15 +27,14 @@
     "nut_width_mm": 43.0,
     "fretboard_radius_mm": 304.8
   },
-
   "body_constraints": {
-    "rim_min_in": 0.50,
+    "rim_min_in": 0.5,
     "rim_min_mm": 12.7,
-    "top_skin_min_in": 0.30,
+    "top_skin_min_in": 0.3,
     "top_skin_min_mm": 7.62,
-    "spine_width_min_in": 1.50,
+    "spine_width_min_in": 1.5,
     "spine_width_min_mm": 38.1,
-    "max_hollow_depth_in": 1.20,
+    "max_hollow_depth_in": 1.2,
     "max_hollow_depth_mm": 30.48,
     "notes": [
       "Rim maintains structural integrity at body edges",
@@ -45,7 +42,6 @@
       "Spine runs centerline, carries string tension load"
     ]
   },
-
   "cavities": {
     "bass_chamber": {
       "kind": "bass",
@@ -57,7 +53,7 @@
         "offset_direction": "bass",
         "notes": "Lower bout, bass side of spine"
       },
-      "depth_in": 1.20,
+      "depth_in": 1.2,
       "depth_mm": 30.48,
       "constraints": [
         "Maintain rim_min from body edge",
@@ -66,7 +62,6 @@
       ],
       "toolpath_op": "OP10"
     },
-
     "treble_chamber": {
       "kind": "treble",
       "template_id": "cavity_treble_main_v1",
@@ -77,7 +72,7 @@
         "offset_direction": "treble",
         "notes": "Lower bout, treble side of spine"
       },
-      "depth_in": 1.20,
+      "depth_in": 1.2,
       "depth_mm": 30.48,
       "constraints": [
         "Maintain rim_min from body edge",
@@ -86,7 +81,6 @@
       ],
       "toolpath_op": "OP10"
     },
-
     "tail_chamber": {
       "kind": "tail",
       "template_id": "cavity_tail_wing_v1",
@@ -97,7 +91,7 @@
         "offset_direction": "tailpiece",
         "notes": "Behind bridge, tail end of body"
       },
-      "depth_in": 1.20,
+      "depth_in": 1.2,
       "depth_mm": 30.48,
       "constraints": [
         "Stability risk - consider web bridges",
@@ -106,7 +100,6 @@
       ],
       "toolpath_op": "OP10"
     },
-
     "electronics_pod": {
       "kind": "pod",
       "template_id_rh": "pod_rh_v1",
@@ -118,7 +111,7 @@
         "offset_direction": "treble",
         "notes": "Upper bout area, accessible via service cover"
       },
-      "depth_in": 1.20,
+      "depth_in": 1.2,
       "depth_mm": 30.48,
       "access": "service_cover_required",
       "constraints": [
@@ -133,7 +126,6 @@
         "notes": "Pi5 base + HiFiBerry HAT stacked, Arduino alongside"
       }
     },
-
     "pickup_neck": {
       "kind": "pickup",
       "template_id": "pickup_humbucker_neck_v1",
@@ -153,7 +145,6 @@
       },
       "toolpath_op": "OP50"
     },
-
     "pickup_bridge": {
       "kind": "pickup",
       "template_id": "pickup_humbucker_bridge_v1",
@@ -173,7 +164,6 @@
       },
       "toolpath_op": "OP50"
     },
-
     "control_cavity": {
       "kind": "control",
       "template_id": "control_cavity_lp_v1",
@@ -197,7 +187,6 @@
       "notes": "May be repurposed or reduced with Smart Guitar electronics"
     }
   },
-
   "wire_channels": {
     "pickup_to_pod": {
       "template_id": "wire_routes_rh_v1",
@@ -225,7 +214,6 @@
       "toolpath_op": "OP30"
     }
   },
-
   "drill_passages": {
     "template_id": "drill_passages_rh_v1",
     "toolpath_op": "OP40",
@@ -242,7 +230,6 @@
       }
     ]
   },
-
   "electronics_components": {
     "pi5": {
       "id": "pi5",
@@ -264,7 +251,6 @@
       },
       "notes": "Keep USB/HDMI clearance; prefer side access via pod lid"
     },
-
     "arduino_uno_r4": {
       "id": "arduino_uno_r4",
       "display_name": "Arduino Uno R4",
@@ -283,9 +269,8 @@
         "fastener": "M3",
         "standoff_mm": 6.0
       },
-      "notes": "Treat as I/O coprocessor; isolate from audio traces"
+      "notes": "I/O coprocessor only — footswitches, pots, LEDs, BMS telemetry, relay bypass. NO AUDIO PATH. Audio handled by Hi-Z USB interface to HiFiBerry HAT."
     },
-
     "hifiberry_dac_adc": {
       "id": "hifiberry_dac_adc",
       "display_name": "HiFiBerry DAC+ADC",
@@ -307,7 +292,6 @@
       "stacks_on": "pi5",
       "notes": "Account for stacking height; ensure lid clearance"
     },
-
     "battery_pack": {
       "id": "battery_pack",
       "display_name": "Battery Pack + BMS",
@@ -329,7 +313,6 @@
       "location": "bass_chamber",
       "notes": "Default placement: bass chamber; route power via spine channel"
     },
-
     "fan_40mm": {
       "id": "fan_40mm",
       "display_name": "40mm Cooling Fan",
@@ -349,31 +332,52 @@
         "standoff_mm": 0.0
       },
       "notes": "Requires vents in lid; otherwise thermal warning"
+    },
+    "signal_chain": {
+      "signal_chain_version": "2.0",
+      "signal_chain_date": "2026-03-23",
+      "audio_path": {
+        "input": "hi_z_usb_interface_to_pi5",
+        "processing": "jack_guitarix_modep",
+        "output_i2s": "hifiberry_dac_adc_hat",
+        "output_wifi": "pipewire_network_sink",
+        "output_headphone": "hifiberry_headphone_jack"
+      },
+      "arduino_role": "io_coprocessor_control_only",
+      "arduino_audio": false,
+      "luthiers_toolbox_ref": "smart_guitar_v1.json:signal_chain"
     }
   },
-
   "toolpath_operations": {
     "OP10": {
       "name": "Hollow chambers rough",
       "surface": "back",
       "strategy": "2D_Adaptive",
       "tool": "T2_1_4_UPCUT",
-      "targets": ["bass_chamber", "treble_chamber", "tail_chamber"]
+      "targets": [
+        "bass_chamber",
+        "treble_chamber",
+        "tail_chamber"
+      ]
     },
     "OP20": {
       "name": "Pod cavity rough",
       "surface": "back",
       "strategy": "2D_Adaptive",
       "tool": "T2_1_4_UPCUT",
-      "targets": ["electronics_pod"]
+      "targets": [
+        "electronics_pod"
+      ]
     },
     "OP30": {
       "name": "Wire channels",
       "surface": "back",
       "strategy": "2D_Contour",
       "tool": "T3_1_8_UPCUT",
-      "max_depth_in": 0.50,
-      "targets": ["wire_channels"]
+      "max_depth_in": 0.5,
+      "targets": [
+        "wire_channels"
+      ]
     },
     "OP40": {
       "name": "Drill passages",
@@ -381,17 +385,21 @@
       "strategy": "Drill",
       "tool": "T3_1_8_UPCUT",
       "max_depth_in": 0.75,
-      "targets": ["drill_passages"]
+      "targets": [
+        "drill_passages"
+      ]
     },
     "OP50": {
       "name": "Pickup cavities",
       "surface": "top",
       "strategy": "2D_Pocket",
       "tool": "T2_1_4_UPCUT",
-      "targets": ["pickup_neck", "pickup_bridge"]
+      "targets": [
+        "pickup_neck",
+        "pickup_bridge"
+      ]
     }
   },
-
   "pi_mcu_event_contract": {
     "description": "Communication protocol between Pi5 (Music Brain) and Arduino (Hardware Constitution)",
     "principles": [
@@ -403,23 +411,40 @@
     "event_types": [
       {
         "name": "HarmonyEvent",
-        "example": {"current_chord": "Gmaj7", "next_chord": "Cmaj7", "beats_until_change": 4}
+        "example": {
+          "current_chord": "Gmaj7",
+          "next_chord": "Cmaj7",
+          "beats_until_change": 4
+        }
       },
       {
         "name": "TimeEvent",
-        "example": {"tempo_bpm": 120, "time_signature": "4/4", "current_beat": 2.5}
+        "example": {
+          "tempo_bpm": 120,
+          "time_signature": "4/4",
+          "current_beat": 2.5
+        }
       },
       {
         "name": "GuidanceEvent",
-        "example": {"message": "Move to 5th fret", "urgency": "suggestion"}
+        "example": {
+          "message": "Move to 5th fret",
+          "urgency": "suggestion"
+        }
       },
       {
         "name": "DisplayHintEvent",
-        "example": {"led_pattern": "fret_highlight", "frets": [5, 7, 9]}
+        "example": {
+          "led_pattern": "fret_highlight",
+          "frets": [
+            5,
+            7,
+            9
+          ]
+        }
       }
     ]
   },
-
   "provenance": {
     "sources": [
       "luthiers-toolbox:instrument_geometry/body/detailed_outlines.py",
