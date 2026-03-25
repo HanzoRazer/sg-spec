@@ -25,7 +25,15 @@
     "scale_length_mm": 628.65,
     "fret_count": 22,
     "nut_width_mm": 43.0,
-    "fretboard_radius_mm": 304.8
+    "fretboard_radius_mm": 304.8,
+    "neck_length": {
+      "protrusion_above_body_mm": 368.3,
+      "pocket_tenon_mm": 76.2,
+      "blank_minimum_mm": 444.5,
+      "note": "protrusion + tenon = blank. Protrusion = overall_length - body_length. Blank minimum equals body length exactly.",
+      "overall_instrument_mm": 812.8,
+      "body_length_mm": 444.5
+    }
   },
   "body_constraints": {
     "rim_min_in": 0.5,
@@ -269,7 +277,7 @@
         "fastener": "M3",
         "standoff_mm": 6.0
       },
-      "notes": "I/O coprocessor only — footswitches, pots, LEDs, BMS telemetry, relay bypass. NO AUDIO PATH. Audio handled by Hi-Z USB interface to HiFiBerry HAT."
+      "notes": "I/O coprocessor only \u00e2\u20ac\u201d footswitches, pots, LEDs, BMS telemetry, relay bypass. NO AUDIO PATH. Audio handled by Hi-Z USB interface to HiFiBerry HAT."
     },
     "hifiberry_dac_adc": {
       "id": "hifiberry_dac_adc",
