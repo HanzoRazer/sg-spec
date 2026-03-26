@@ -177,11 +177,11 @@
       "template_id": "control_cavity_sg_v1",
       "surface": "back",
       "position": {
-        "zone": "lower_bout_treble",
+        "zone": "between_bridge_pickup_and_headless_bridge",
         "relative_to": "centerline",
-        "x_offset_mm": 55.2,
-        "y_from_top_mm": 346.7,
-        "notes": "Smart Guitar 3-knob layout — aligned with control_plate_surface (x=55.2, y=346.7)"
+        "x_offset_mm": 25.0,
+        "y_from_top_mm": 317.0,
+        "notes": "Smart Guitar 3-knob layout — between bridge pickup (y=294.6) and headless bridge (y=343). Single 'Pickups and Controls Access Panel' covers both. 34mm clearance to body edge."
       },
       "dimensions_mm": {
         "length": 100.0,
