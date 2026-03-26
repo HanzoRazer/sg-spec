@@ -131,7 +131,7 @@
       "electronics_stack": {
         "layout": "stacked_vertical",
         "total_height_mm": 76.0,
-        "notes": "Pi5 base + HiFiBerry HAT stacked, Arduino alongside"
+        "notes": "Pi5 base + HiFiBerry HAT stacked. Teensy 4.1 alongside (replaces Arduino Uno R4 — pocket 64% smaller, board 77% smaller)."
       }
     },
     "pickup_neck": {
@@ -259,25 +259,16 @@
       },
       "notes": "Keep USB/HDMI clearance; prefer side access via pod lid"
     },
-    "arduino_uno_r4": {
-      "id": "arduino_uno_r4",
-      "display_name": "Arduino Uno R4",
-      "role": "Hardware Constitution (I/O coprocessor)",
-      "dimensions_mm": {
-        "width": 68.6,
-        "depth": 53.4,
-        "height": 18.0
-      },
-      "clearance_mm": {
-        "margin": 3.0,
-        "cable_bend_radius": 8.0
-      },
-      "mounting": {
-        "surface": "pod_floor",
-        "fastener": "M3",
-        "standoff_mm": 6.0
-      },
-      "notes": "I/O coprocessor only \u00e2\u20ac\u201d footswitches, pots, LEDs, BMS telemetry, relay bypass. NO AUDIO PATH. Audio handled by Hi-Z USB interface to HiFiBerry HAT."
+    "teensy_4_1": {
+      "id": "teensy_4_1",
+      "display_name": "Teensy 4.1",
+      "role": "I/O coprocessor (replaces Arduino Uno R4 — pocket 64% smaller, bare board 77% smaller)",
+      "dimensions_mm": {"width": 61.0, "depth": 18.0, "height": 3.0},
+      "clearance_mm": {"margin": 4.5, "cable_bend_radius": 6.0},
+      "mounting": {"surface": "pod_floor", "fastener": "M3", "standoff_mm": 4.0},
+      "pocket_mm": {"length": 70.0, "width": 25.0, "depth": 20.0, "corner_radius": 3.0},
+      "cover_mm": {"length": 80.0, "width": 35.0, "screws": 2},
+      "notes": "I/O coprocessor only — footswitches, pots, LEDs, BMS telemetry, relay bypass. NO AUDIO PATH. Replaced Arduino Uno R4 on 2026-03-25 for cavity space recovery."
     },
     "hifiberry_dac_adc": {
       "id": "hifiberry_dac_adc",
@@ -342,8 +333,8 @@
       "notes": "Requires vents in lid; otherwise thermal warning"
     },
     "signal_chain": {
-      "signal_chain_version": "2.0",
-      "signal_chain_date": "2026-03-23",
+      "signal_chain_version": "2.1",
+      "signal_chain_date": "2026-03-25",
       "audio_path": {
         "input": "hi_z_usb_interface_to_pi5",
         "processing": "jack_guitarix_modep",
@@ -351,8 +342,8 @@
         "output_wifi": "pipewire_network_sink",
         "output_headphone": "hifiberry_headphone_jack"
       },
-      "arduino_role": "io_coprocessor_control_only",
-      "arduino_audio": false,
+      "teensy_role": "io_coprocessor_control_only",
+      "teensy_audio": false,
       "luthiers_toolbox_ref": "smart_guitar_v1.json:signal_chain"
     }
   },
@@ -409,7 +400,7 @@
     }
   },
   "pi_mcu_event_contract": {
-    "description": "Communication protocol between Pi5 (Music Brain) and Arduino (Hardware Constitution)",
+    "description": "Communication protocol between Pi5 (Music Brain) and Teensy 4.1 (Hardware Constitution / I/O coprocessor)",
     "principles": [
       "Pi never controls hardware directly",
       "MCU never 'understands music'",
