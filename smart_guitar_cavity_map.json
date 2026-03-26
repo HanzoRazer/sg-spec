@@ -174,25 +174,37 @@
     },
     "control_cavity": {
       "kind": "control",
-      "template_id": "control_cavity_lp_v1",
+      "template_id": "control_cavity_sg_v1",
       "surface": "back",
       "position": {
         "zone": "lower_bout_treble",
-        "relative_to": "body_edge",
-        "notes": "Traditional LP control cavity location"
+        "relative_to": "centerline",
+        "x_offset_mm": 55.2,
+        "y_from_top_mm": 346.7,
+        "notes": "Smart Guitar 3-knob layout — aligned with control_plate_surface (x=55.2, y=346.7)"
       },
-      "depth_in": 1.25,
-      "depth_mm": 31.75,
-      "access": "plastic_cover",
+      "dimensions_mm": {
+        "length": 100.0,
+        "width": 60.0,
+        "corner_radius": 6.35
+      },
+      "depth_in": 0.787,
+      "depth_mm": 20.0,
+      "access": "abs_cover_plate",
+      "cover_plate_mm": {
+        "length": 110.0,
+        "width": 70.0,
+        "thickness": 3.175,
+        "screws": 4
+      },
       "contents": [
-        "volume_pot_neck",
-        "volume_pot_bridge",
-        "tone_pot_neck",
-        "tone_pot_bridge",
-        "toggle_switch_wire",
-        "output_jack_wire"
+        "volume_pot",
+        "tone_pot",
+        "rotary_switch",
+        "wiring_harness"
       ],
-      "notes": "May be repurposed or reduced with Smart Guitar electronics"
+      "toolpath_op": "OP-CC",
+      "notes": "LP heritage 108×64×31.75mm scaled to 100×60×20mm for Smart Guitar simplified 3-knob layout. Houses pots, switch, wiring. Shallower than LP since no toggle switch cavity needed."
     }
   },
   "wire_channels": {
@@ -397,6 +409,38 @@
         "pickup_neck",
         "pickup_bridge"
       ]
+    },
+    "OP-CC-50": {
+      "name": "Control cavity rough",
+      "surface": "back",
+      "strategy": "2D_Adaptive",
+      "tool": "T2_6MM_FLAT",
+      "stepdown_mm": 3.0,
+      "targets": ["control_cavity"]
+    },
+    "OP-CC-51": {
+      "name": "Control cavity finish",
+      "surface": "back",
+      "strategy": "2D_Contour",
+      "tool": "T2_6MM_FLAT",
+      "stepover_mm": 0.5,
+      "targets": ["control_cavity"]
+    },
+    "OP-CC-52": {
+      "name": "Control cavity cover recess",
+      "surface": "back",
+      "strategy": "2D_Pocket",
+      "tool": "T2_6MM_FLAT",
+      "depth_mm": 3.175,
+      "targets": ["control_cavity_cover"]
+    },
+    "OP-CC-60": {
+      "name": "Control cavity screw holes",
+      "surface": "back",
+      "strategy": "Drill",
+      "tool": "T4_2_5MM_DRILL",
+      "depth_mm": 10.0,
+      "targets": ["control_cavity_screw_holes"]
     }
   },
   "pi_mcu_event_contract": {
