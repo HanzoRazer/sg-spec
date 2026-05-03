@@ -36,6 +36,7 @@ class DiagnosisCode(str, Enum):
     GRID_DRIFT = "grid_drift"              # Accumulating timing error
     LATE_START = "late_start"              # Missed count-in / late entry
     EARLY_START = "early_start"            # Jumped the gun
+    TIMING_GRID_DEVIATION = "timing_grid_deviation"  # Note timing exceeds threshold
 
     # Density/complexity issues
     DENSITY_OVERLOAD = "density_overload"  # Too many notes to track
@@ -46,6 +47,7 @@ class DiagnosisCode(str, Enum):
     BARLINE_CONFUSION = "barline_confusion"  # Lost the form
     CHORD_CHANGE_MISS = "chord_change_miss"  # Missed chord boundaries
     TONAL_DRIFT = "tonal_drift"              # Playing in wrong key area
+    DIM_ORBIT_VIOLATION = "dim_orbit_violation"  # Outside diminished orbit
 
     # Technique issues (for future tag-based assessment)
     TECHNIQUE_OVERLOAD = "technique_overload"  # Too many technique demands

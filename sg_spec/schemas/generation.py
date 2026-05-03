@@ -26,7 +26,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 # Import coach schema for assignment field (runtime required for Pydantic)
-from sg_spec.ai.coach.schemas import PracticeAssignment  # noqa: F401
+from sg_coach.schemas import PracticeAssignment  # noqa: F401
 
 
 # =============================================================================
