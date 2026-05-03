@@ -282,7 +282,7 @@ class CoachFinding(BaseModel):
     type: Literal["timing", "harmony", "technique", "consistency", "other"]
     severity: Severity
     evidence: FindingEvidence = Field(default_factory=FindingEvidence)
-    interpretation: str = Field(min_length=1, max_length=500)
+    interpretation: str = Field(min_length=1, max_length=240)
 
     # Governance fields (Phase 5.3) - all optional for backward compatibility
     code: Optional[DiagnosisCode] = None

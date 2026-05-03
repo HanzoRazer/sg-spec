@@ -53,6 +53,10 @@ class DiagnosisCode(str, Enum):
     TECHNIQUE_OVERLOAD = "technique_overload"  # Too many technique demands
     ARTICULATION_MISS = "articulation_miss"    # Wrong articulation applied
 
+    # Pitch issues (Layer 1b pitch accuracy)
+    WRONG_NOTE = "wrong_note"                  # Performed note identity != expected
+    PITCH_DEVIATION = "pitch_deviation"        # Pitch differs beyond cents threshold
+
     # Positive indicators (for intensification)
     TIMING_STABLE = "timing_stable"        # Solid timing throughout
     FORM_LOCKED = "form_locked"            # Clearly following form
