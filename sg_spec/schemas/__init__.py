@@ -25,15 +25,29 @@ Usage:
 
     # Practice assignment (Phase 5.2)
     from sg_spec.schemas.practice_assignment import PracticeAssignmentDoc
+
+    # Feedback vocabulary (Phase 5.3)
+    from sg_spec.schemas.feedback_vocabulary import (
+        FeedbackDomain, FeedbackSeverity, FeedbackRenderHint, FeedbackActionType
+    )
+
+    # Coach finding contracts (Phase 5.3)
+    from sg_spec.schemas.coach_finding import (
+        CoachFindingContract, FindingEvidenceContract,
+        SuggestedFeedbackAction, TargetSpan
+    )
 """
 
 from .smart_guitar import *
 from .sandbox_schemas import *
 from .groove_layer import *
 from .clip_bundle import *
-from .generation import *
 from .technique_sidecar import *
 from .adaptive_feedback import *
 from .practice_assignment import *
+from .feedback_vocabulary import *
+from .coach_finding import *
+from .coach_schemas import *
+from .generation import *  # Must be last (depends on coach_schemas)
 
-__version__ = "1.6.0"
+__version__ = "1.7.0"
