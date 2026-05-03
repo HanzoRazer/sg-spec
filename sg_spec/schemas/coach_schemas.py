@@ -111,6 +111,52 @@ class ProgramRef(BaseModel):
 
 
 # ============================================================================
+# Normalized Evaluation Inputs (Sprint 3)
+# ============================================================================
+
+
+class HarmonyEvaluationInput(BaseModel):
+    """Normalized input for harmony evaluators (e.g., diminished orbit)."""
+    model_config = ConfigDict(extra="forbid")
+
+    key: Optional[str] = None
+    performed_notes: List[Any] = Field(default_factory=list)
+    expected_orbit: Optional[List[Any]] = None
+
+
+class TimingEvaluationInput(BaseModel):
+    """Normalized input for timing evaluators."""
+    model_config = ConfigDict(extra="forbid")
+
+    expected_times: List[float] = Field(default_factory=list)
+    performed_times: List[float] = Field(default_factory=list)
+    threshold_ms: float = 40.0
+
+
+class PitchEvaluationInput(BaseModel):
+    """Normalized input for pitch evaluators."""
+    model_config = ConfigDict(extra="forbid")
+
+    expected_pitch_events: List[Dict[str, Any]] = Field(default_factory=list)
+    performed_pitch_events: List[Dict[str, Any]] = Field(default_factory=list)
+    cents_threshold: float = 25.0
+
+
+class NormalizedSessionData(BaseModel):
+    """
+    Canonical container for evaluator inputs.
+
+    Evaluators read from session.normalized instead of separate parameters.
+    This enables a clean evaluate_session(session) signature.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    harmony: Optional[HarmonyEvaluationInput] = None
+    timing: Optional[TimingEvaluationInput] = None
+    pitch: Optional[PitchEvaluationInput] = None
+
+
+# ============================================================================
 # 1) SessionRecord (What happened — facts only)
 # ============================================================================
 
@@ -210,6 +256,10 @@ class SessionRecord(BaseModel):
     events: SessionEvents = Field(default_factory=SessionEvents)
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    # Sprint 3: Normalized evaluator inputs
+    key: Optional[str] = Field(default=None, description="Music key if known, else extracted from program_ref")
+    normalized: Optional[NormalizedSessionData] = Field(default=None, description="Canonical evaluator inputs")
 
     @model_validator(mode="after")
     def _error_by_step_keys(self) -> "SessionRecord":
@@ -495,6 +545,11 @@ __all__ = [
     "severity_to_feedback_severity",
     # Shared
     "ProgramRef",
+    # Normalized evaluation inputs (Sprint 3)
+    "HarmonyEvaluationInput",
+    "TimingEvaluationInput",
+    "PitchEvaluationInput",
+    "NormalizedSessionData",
     # Session layer
     "SessionTiming",
     "TimingErrorStats",
