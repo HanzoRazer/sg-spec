@@ -30,6 +30,7 @@ from .feedback_vocabulary import (
     FeedbackRenderHint,
     FeedbackSeverity,
 )
+from .action_mapping import ActionRecommendationSet
 
 
 # ============================================================================
@@ -396,6 +397,12 @@ class CoachEvaluation(BaseModel):
     focus_recommendation: FocusRecommendation
     confidence: float = Field(ge=0.0, le=1.0)
 
+    # Sprint 4: Action recommendations per finding
+    recommendations: Optional[List[ActionRecommendationSet]] = Field(
+        default=None,
+        description="Recommended actions for each finding, populated by action recommender",
+    )
+
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @field_validator("strengths", "weaknesses")
@@ -563,6 +570,8 @@ __all__ = [
     "CoachEvaluation",
     "SuggestedAction",
     "TargetSpan",
+    # Action recommendations (Sprint 4)
+    "ActionRecommendationSet",
     # Assignment layer
     "AssignmentConstraints",
     "AssignmentFocus",
