@@ -36,6 +36,11 @@ Usage:
         CoachFindingContract, FindingEvidenceContract,
         SuggestedFeedbackAction, TargetSpan
     )
+
+    # Action mapping (Sprint 4)
+    from sg_spec.schemas.action_mapping import (
+        ActionMapping, RecommendedAction, ActionRecommendationSet
+    )
 """
 
 from .smart_guitar import *
@@ -48,6 +53,7 @@ from .practice_assignment import *
 from .feedback_vocabulary import *
 from .coach_finding import *
 from .coach_schemas import *
+from .action_mapping import *
 from .generation import *  # Must be last (depends on coach_schemas)
 
 __version__ = "1.7.0"
