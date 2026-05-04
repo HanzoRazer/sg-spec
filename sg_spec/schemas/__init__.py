@@ -41,6 +41,12 @@ Usage:
     from sg_spec.schemas.action_mapping import (
         ActionMapping, RecommendedAction, ActionRecommendationSet
     )
+
+    # User feedback loop (Sprint 5)
+    from sg_spec.schemas.user_feedback import (
+        UserFeedbackResponseType, PracticeOutcome,
+        UserFeedbackEvent, LearningSignal
+    )
 """
 
 from .smart_guitar import *
@@ -54,6 +60,7 @@ from .feedback_vocabulary import *
 from .coach_finding import *
 from .coach_schemas import *
 from .action_mapping import *
+from .user_feedback import *
 from .generation import *  # Must be last (depends on coach_schemas)
 
-__version__ = "1.7.0"
+__version__ = "1.8.0"

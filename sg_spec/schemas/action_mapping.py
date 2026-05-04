@@ -76,6 +76,11 @@ class ActionRecommendationSet(BaseModel):
     """
     model_config = ConfigDict(extra="forbid")
 
+    # Identity (Layer 2 feedback loop requires stable IDs)
+    id: Optional[str] = Field(
+        default=None,
+        description="Stable identifier for this recommendation set"
+    )
     finding_code: DiagnosisCode
     finding_id: Optional[str] = Field(
         default=None,

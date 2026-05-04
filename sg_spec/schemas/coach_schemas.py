@@ -329,6 +329,9 @@ class CoachFinding(BaseModel):
     """A single coaching observation tied to evidence."""
     model_config = ConfigDict(extra="forbid")
 
+    # Identity (Layer 2 feedback loop requires stable IDs)
+    id: Optional[str] = Field(default=None, description="Stable identifier for feedback linkage")
+
     # Legacy fields (keep for compatibility)
     type: Literal["timing", "harmony", "technique", "consistency", "other"]
     severity: Severity
