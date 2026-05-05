@@ -166,10 +166,16 @@ class LearningSignal(BaseModel):
 
     # Signal weight
     weight: float = Field(
-        default=1.0,
-        ge=0.0,
-        le=10.0,
-        description="Relative importance of this signal for learning"
+        default=0.0,
+        ge=-2.0,
+        le=2.0,
+        description="Signal weight: positive = effective, negative = ineffective"
+    )
+
+    # Source linkage
+    source_event_id: Optional[str] = Field(
+        default=None,
+        description="ID of the UserFeedbackEvent this signal was derived from"
     )
 
 
