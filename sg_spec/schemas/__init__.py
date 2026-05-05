@@ -45,7 +45,7 @@ Usage:
     # User feedback loop (Sprint 5)
     from sg_spec.schemas.user_feedback import (
         UserFeedbackResponseType, PracticeOutcome,
-        UserFeedbackEvent, LearningSignal
+        UserFeedbackEvent, LearningSignal, FeedbackCaptureRequest
     )
 """
 

@@ -108,6 +108,20 @@ class UserFeedbackEvent(BaseModel):
         default=None,
         description="Structured correction data (e.g., corrected note, timing, span)"
     )
+    outcome: Optional[PracticeOutcome] = Field(
+        default=None,
+        description="Observable outcome after receiving coaching"
+    )
+
+    # Capture metadata
+    source: Optional[str] = Field(
+        default=None,
+        description="Source of feedback capture (e.g., 'ui', 'agentd', 'cli', 'test')"
+    )
+    interaction_context: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Flexible context: screen/view, exercise step, playback timestamp, etc."
+    )
 
     # Timestamp
     timestamp: datetime = Field(
@@ -159,9 +173,71 @@ class LearningSignal(BaseModel):
     )
 
 
+class FeedbackCaptureRequest(BaseModel):
+    """
+    Incoming request to capture user feedback.
+
+    This represents a feedback capture request before it becomes a stored
+    UserFeedbackEvent. The capture_feedback() function in sg-coach converts
+    this to a UserFeedbackEvent with auto-generated ID and timestamp.
+
+    Sprint 5 Dev Order 2: Capture contract only, no storage.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    # Linkage (at least one recommended)
+    session_id: Optional[str] = Field(
+        default=None,
+        description="ID of the practice session"
+    )
+    finding_id: Optional[str] = Field(
+        default=None,
+        description="ID of the CoachFinding being responded to"
+    )
+    recommendation_id: Optional[str] = Field(
+        default=None,
+        description="ID of the ActionRecommendationSet being responded to"
+    )
+
+    # Response (response_type required)
+    response_type: UserFeedbackResponseType = Field(
+        description="How the user responded to the finding/recommendation"
+    )
+    confidence: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="User's confidence in their response (0.0-1.0)"
+    )
+    comment: Optional[str] = Field(
+        default=None,
+        max_length=500,
+        description="Optional user comment"
+    )
+    corrected_result: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Structured correction data"
+    )
+    outcome: Optional[PracticeOutcome] = Field(
+        default=None,
+        description="Observable outcome after coaching"
+    )
+
+    # Capture metadata
+    source: Optional[str] = Field(
+        default=None,
+        description="Source of capture (e.g., 'ui', 'agentd', 'cli', 'test')"
+    )
+    interaction_context: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Flexible context for the interaction"
+    )
+
+
 __all__ = [
     "UserFeedbackResponseType",
     "PracticeOutcome",
     "UserFeedbackEvent",
     "LearningSignal",
+    "FeedbackCaptureRequest",
 ]
