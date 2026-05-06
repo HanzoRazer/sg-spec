@@ -178,6 +178,26 @@ class LearningSignal(BaseModel):
         description="ID of the UserFeedbackEvent this signal was derived from"
     )
 
+    # Context for storage and aggregation
+    user_id: Optional[str] = Field(
+        default=None,
+        description="User who generated this signal (None = global)"
+    )
+    session_id: Optional[str] = Field(
+        default=None,
+        description="Practice session this signal came from"
+    )
+    instrument_id: Optional[str] = Field(
+        default=None,
+        description="Instrument used during practice"
+    )
+
+    # Timestamp
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="When this signal was created"
+    )
+
 
 class FeedbackCaptureRequest(BaseModel):
     """

@@ -52,6 +52,11 @@ Usage:
     from sg_spec.schemas.learning_aggregation import (
         ActionEffectivenessProfile, LearningSignalAggregateSet
     )
+
+    # Learning store (Sprint 6)
+    from sg_spec.schemas.learning_store import (
+        LearningSignalQuery, LearningStoreStats
+    )
 """
 
 from .smart_guitar import *
@@ -67,6 +72,7 @@ from .coach_schemas import *
 from .action_mapping import *
 from .user_feedback import *
 from .learning_aggregation import *
+from .learning_store import *
 from .generation import *  # Must be last (depends on coach_schemas)
 
 __version__ = "1.8.0"
