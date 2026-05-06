@@ -73,6 +73,11 @@ Usage:
         DrillDifficulty, DrillReference,
         DrillResolutionRequest, DrillResolutionResult
     )
+
+    # Assignment outcome (Sprint 10)
+    from sg_spec.schemas.assignment_outcome import (
+        AssignmentOutcomeEvent, AssignmentOutcomeCaptureRequest
+    )
 """
 
 from .smart_guitar import *
@@ -91,6 +96,7 @@ from .learning_aggregation import *
 from .learning_store import *
 from .personalization import *
 from .drill_resolution import *
+from .assignment_outcome import *
 from .generation import *  # Must be last (depends on coach_schemas)
 
 __version__ = "1.8.0"
