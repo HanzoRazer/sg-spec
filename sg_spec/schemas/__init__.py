@@ -63,6 +63,12 @@ Usage:
         PersonalizationBlendConfig, PersonalizedActionScore,
         PersonalizedRankingResult
     )
+
+    # Drill resolution (Sprint 8)
+    from sg_spec.schemas.drill_resolution import (
+        DrillDifficulty, DrillReference,
+        DrillResolutionRequest, DrillResolutionResult
+    )
 """
 
 from .smart_guitar import *
@@ -80,6 +86,7 @@ from .user_feedback import *
 from .learning_aggregation import *
 from .learning_store import *
 from .personalization import *
+from .drill_resolution import *
 from .generation import *  # Must be last (depends on coach_schemas)
 
 __version__ = "1.8.0"
