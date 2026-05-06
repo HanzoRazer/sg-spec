@@ -1,16 +1,23 @@
 # sg_spec/schemas/practice_assignment.py
 """
-Phase 5.2 Practice Assignment schema.
+Practice Assignment schemas.
 
-Defines the minimal PracticeAssignment document written as clip.coach.json
-into each clip bundle directory.
+Phase 5.2: PracticeAssignmentDoc for clip bundle (clip.coach.json).
+Sprint 9: AssembledPracticeAssignment for coaching pipeline output.
 """
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
-from typing import List, Literal, Optional
+from enum import Enum
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from .adaptive_feedback import DiagnosisCode
+from .coach_schemas import TargetSpan
+from .drill_resolution import DrillReference
+from .feedback_vocabulary import FeedbackActionType
 
 
 class PracticeAssignmentInner(BaseModel):
@@ -51,8 +58,108 @@ class PracticeAssignmentDoc(BaseModel):
     lineage: PracticeLineage
 
 
+# ============================================================================
+# Sprint 9: Assembled Practice Assignments
+# ============================================================================
+
+
+class PracticeAssignmentType(str, Enum):
+    """Type of practice assignment."""
+    drill = "drill"
+    repeat = "repeat"
+    review = "review"
+    slow_down = "slow_down"
+    retry_section = "retry_section"
+    isolate = "isolate"
+    unresolved = "unresolved"
+
+
+class PracticeAssignmentStatus(str, Enum):
+    """Status of a practice assignment."""
+    ready = "ready"
+    unresolved = "unresolved"
+    skipped = "skipped"
+
+
+def generate_assignment_id() -> str:
+    """Generate a short assignment ID with pa_ prefix."""
+    return f"pa_{uuid.uuid4().hex[:12]}"
+
+
+class AssembledPracticeAssignment(BaseModel):
+    """
+    A concrete next-step practice assignment.
+
+    Assembled from a coaching finding, recommended action, and optionally
+    a resolved drill. This is the renderable output of the coaching pipeline.
+
+    Note: Named AssembledPracticeAssignment to distinguish from the existing
+    PracticeAssignment in coach_schemas.py which serves a different purpose
+    (constraint-based assignment with program refs).
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    # Identity
+    id: Optional[str] = Field(
+        default=None,
+        description="Assignment ID (pa_<12hex>), auto-generated if not provided"
+    )
+    assignment_type: PracticeAssignmentType
+    status: PracticeAssignmentStatus = PracticeAssignmentStatus.ready
+
+    # Content
+    title: str = Field(min_length=1, max_length=120)
+    instructions: str = Field(min_length=1, max_length=500)
+
+    # Source linkage
+    diagnosis_code: Optional[DiagnosisCode] = None
+    action_type: Optional[FeedbackActionType] = None
+    finding_id: Optional[str] = None
+    recommendation_id: Optional[str] = None
+    drill_resolution_id: Optional[str] = None
+
+    # Drill content (if drill-backed)
+    drill: Optional[DrillReference] = None
+    target_span: Optional[TargetSpan] = None
+
+    # Ranking metadata
+    priority: int = Field(default=0, ge=0, le=10)
+    rank_score: Optional[float] = None
+
+    # Resolution metadata
+    reason: Optional[str] = Field(
+        default=None,
+        description="Reason for unresolved status"
+    )
+    params: Dict[str, Any] = Field(default_factory=dict)
+
+    # Provenance
+    source: str = "practice_assignment_assembler"
+    version: str = "0.1"
+
+
+class AssembledPracticeAssignmentSet(BaseModel):
+    """
+    A set of assembled practice assignments.
+
+    Output of batch assignment assembly from multiple recommendations.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    assignments: list[AssembledPracticeAssignment] = Field(default_factory=list)
+    source: str = "practice_assignment_assembler"
+    version: str = "0.1"
+
+
 __all__ = [
+    # Phase 5.2 clip bundle schemas
     "PracticeAssignmentDoc",
     "PracticeAssignmentInner",
     "PracticeLineage",
+    # Sprint 9 assembled assignment schemas
+    "PracticeAssignmentType",
+    "PracticeAssignmentStatus",
+    "AssembledPracticeAssignment",
+    "AssembledPracticeAssignmentSet",
+    "generate_assignment_id",
 ]

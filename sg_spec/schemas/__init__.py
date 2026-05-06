@@ -23,8 +23,12 @@ Usage:
     # Adaptive feedback (Phase 5)
     from sg_spec.schemas.adaptive_feedback import AdaptiveFeedbackV1, DiagnosisCode
 
-    # Practice assignment (Phase 5.2)
-    from sg_spec.schemas.practice_assignment import PracticeAssignmentDoc
+    # Practice assignment (Phase 5.2 + Sprint 9)
+    from sg_spec.schemas.practice_assignment import (
+        PracticeAssignmentDoc,
+        PracticeAssignmentType, PracticeAssignmentStatus,
+        AssembledPracticeAssignment, AssembledPracticeAssignmentSet
+    )
 
     # Feedback vocabulary (Phase 5.3)
     from sg_spec.schemas.feedback_vocabulary import (
