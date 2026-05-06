@@ -57,6 +57,12 @@ Usage:
     from sg_spec.schemas.learning_store import (
         LearningSignalQuery, LearningStoreStats
     )
+
+    # Personalization (Sprint 7)
+    from sg_spec.schemas.personalization import (
+        PersonalizationBlendConfig, PersonalizedActionScore,
+        PersonalizedRankingResult
+    )
 """
 
 from .smart_guitar import *
@@ -73,6 +79,7 @@ from .action_mapping import *
 from .user_feedback import *
 from .learning_aggregation import *
 from .learning_store import *
+from .personalization import *
 from .generation import *  # Must be last (depends on coach_schemas)
 
 __version__ = "1.8.0"
