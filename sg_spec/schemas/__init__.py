@@ -78,6 +78,33 @@ Usage:
     from sg_spec.schemas.assignment_outcome import (
         AssignmentOutcomeEvent, AssignmentOutcomeCaptureRequest
     )
+
+    # MIDI session input (Sprint 11)
+    from sg_spec.schemas.midi_session import (
+        MidiEventType, MidiNoteEvent,
+        SessionInputMetadata, MidiSessionInput
+    )
+
+    # Practice review (Sprint 12)
+    from sg_spec.schemas.practice_review import (
+        PracticeTimelineEntry, SessionReview,
+        PracticeProgressSummary, PracticeTimeline
+    )
+
+    # Goal tracking (Sprint 13)
+    from sg_spec.schemas.goal_tracking import (
+        GoalStatus, WeaknessTrend,
+        WeaknessProgression, PracticeGoal, GoalProgressSummary
+    )
+
+    # Curriculum alignment (Sprint 14)
+    from sg_spec.schemas.curriculum_alignment import (
+        CurriculumContentType, CurriculumReference,
+        CurriculumAlignmentRequest, CurriculumAlignmentResult
+    )
+
+    # Runtime pipeline (Sprint 15)
+    from sg_spec.schemas.runtime_pipeline import RuntimeCoachingResult
 """
 
 from .smart_guitar import *
@@ -97,6 +124,11 @@ from .learning_store import *
 from .personalization import *
 from .drill_resolution import *
 from .assignment_outcome import *
+from .midi_session import *
+from .practice_review import *
+from .goal_tracking import *
+from .curriculum_alignment import *
+from .runtime_pipeline import *
 from .generation import *  # Must be last (depends on coach_schemas)
 
-__version__ = "1.8.0"
+__version__ = "2.0.0"
