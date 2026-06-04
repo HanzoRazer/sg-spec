@@ -107,18 +107,42 @@ the summary:
 
 ## MVP Boundaries
 
-In MVP scope today:
+The MVP boundary is **not** a statement about how much is built. The platform
+already implements far more than a single-skill demo. The boundary is about what
+we *promise the player*. The governing principle:
 
-- Layer 1 Practice queue over Domain Layer 1 evidence (timing / pitch / technique)
-- Layer 2 Coaching diagnosis and advisory recommendations
-- Layer 3 Teacher oversight: provisional outputs, attachable review
-- Progress tracking of the loop
+> **Capability breadth exists. The user-facing product promise must remain
+> narrow.**
 
-Out of MVP scope (future layers):
+### Implemented capability breadth
 
-- Layer 4 Musicianship Learning beyond progress counters
-- Rhythm, song performance, and ear training as full learning domains
-- Improvisation / audiation / expression
+The runtime lifecycle is already built (sg-spec contracts + sg-coach engine):
+
+- the **practice queue** — what to practice next;
+- **runtime sessions** — start / complete / abandon / attach evidence;
+- **outcomes** and outcome integration;
+- **teacher review** and studio-roster oversight;
+- the **evidence / pedagogical ledger**;
+- **adaptive scheduling**;
+- **UX projections** — dashboard, guided practice view, timeline, narrative,
+  visualization; and
+- **frontend interaction and state**.
+
+### Narrow user-facing promise
+
+What we promise the player stays deliberately small:
+
+- The core measured input remains **timing / pitch / technique first**.
+- Coaching is **advisory**, and **teacher authority** is preserved over every
+  output.
+- Capability above the foundation is surfaced progressively — never promised as
+  a finished musicianship product.
+
+### Still genuinely future
+
+These remain future learning domains (next section), regardless of platform
+breadth: rhythm, song performance, and ear training as full learning domains
+with their own measured outcomes, and improvisation / audiation / expression.
 
 ## Future Learning Domains
 
